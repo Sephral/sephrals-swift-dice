@@ -1,0 +1,2699 @@
+/* Sephral's Swift Dice: the dice layer, the short wait of chat cards and the window "My dice". */
+
+/* -------------------------------------------- */
+/*  Dice layer                                  */
+/* -------------------------------------------- */
+
+#ssd-table {
+  position: fixed;
+  inset: 0;
+  z-index: 9990;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ssd-area {
+  position: absolute;
+  perspective: 1100px;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+.ssd-die {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.ssd-face {
+  position: absolute;
+  overflow: hidden;
+  backface-visibility: hidden;
+  background: var(--ssd-body);
+}
+
+.ssd-glossy .ssd-face {
+  background: radial-gradient(circle at 30% 26%, var(--ssd-light) 0%, var(--ssd-body) 52%, var(--ssd-dark) 100%);
+}
+
+.ssd-matte .ssd-face {
+  background: linear-gradient(165deg, var(--ssd-body) 30%, var(--ssd-dark) 100%);
+}
+
+.ssd-metal .ssd-face {
+  background: linear-gradient(135deg, var(--ssd-light) 0%, var(--ssd-body) 28%, var(--ssd-dark) 46%,
+    var(--ssd-light) 60%, var(--ssd-body) 78%, var(--ssd-dark) 100%);
+}
+
+/* Glass: tinted and see-through, the tinted inside and what is in it show, with a streak of light. The faces at
+   the back are not drawn: a disc inside stands in for them, which costs the browser far less */
+.ssd-inner {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.44);
+  top: calc(var(--ssd-size) * -0.44);
+  width: calc(var(--ssd-size) * 0.88);
+  height: calc(var(--ssd-size) * 0.88);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 58%, var(--ssd-glass-dark) 0, var(--ssd-glass-body) 48%, transparent 72%);
+  pointer-events: none;
+}
+
+.ssd-inner-crystal {
+  background:
+    conic-gradient(from 20deg, transparent, rgb(255 255 255 / 0.12), transparent 30%, rgb(255 255 255 / 0.1), transparent 60%),
+    radial-gradient(circle at 50% 58%, var(--ssd-glass-dark) 0, var(--ssd-glass-body) 48%, transparent 72%);
+}
+
+/* Light falls through glass: its faces darken only half as much */
+.ssd-see-through .ssd-shade {
+  background: rgb(0 0 0 / 0.5);
+}
+
+.ssd-glass .ssd-face {
+  background:
+    linear-gradient(118deg, transparent 32%, rgb(255 255 255 / 0.32) 41%, transparent 50%),
+    linear-gradient(150deg, var(--ssd-glass-light), var(--ssd-glass-body) 50%, var(--ssd-glass-dark));
+}
+
+/* Crystal: see-through with hard glints on every facet and a cold shimmer */
+.ssd-crystal .ssd-face {
+  background:
+    linear-gradient(28deg, transparent 38%, rgb(255 255 255 / 0.5) 45%, transparent 52%),
+    linear-gradient(108deg, transparent 56%, rgb(255 255 255 / 0.32) 61%, transparent 67%),
+    conic-gradient(from 40deg at 50% 50%, var(--ssd-glass-light), var(--ssd-glass-body), var(--ssd-glass-dark),
+      rgb(200 230 255 / 0.3), var(--ssd-glass-light));
+}
+
+/* Pearl: a milky body with a rainbow sheen */
+.ssd-pearl .ssd-face {
+  background:
+    linear-gradient(135deg, rgb(255 205 240 / 0.5), rgb(185 228 255 / 0.5) 35%, rgb(215 255 220 / 0.45) 65%,
+      rgb(255 238 196 / 0.5)),
+    radial-gradient(circle at 30% 25%, #ffffff, var(--ssd-light) 30%, var(--ssd-body) 70%, var(--ssd-dark));
+}
+
+/* Wood: rings of grain in a darker tone */
+.ssd-wood .ssd-face {
+  background:
+    linear-gradient(160deg, rgb(255 255 255 / 0.12), transparent 45%),
+    repeating-radial-gradient(ellipse 140% 90% at 15% -40%, var(--ssd-body) 0 5px, var(--ssd-dark) 6px 7px,
+      var(--ssd-light) 8px 9px, var(--ssd-body) 10px 14px);
+}
+
+/* Stone: grains of light and dark on a dull surface */
+.ssd-stone .ssd-face {
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.22) 0 0.8px, transparent 1.4px) 0 0 / 5px 5px,
+    radial-gradient(circle, rgb(0 0 0 / 0.28) 0 0.9px, transparent 1.6px) 2px 3px / 7px 6px,
+    radial-gradient(circle, rgb(255 255 255 / 0.12) 0 1.4px, transparent 2px) 4px 1px / 11px 9px,
+    linear-gradient(160deg, var(--ssd-body) 20%, var(--ssd-dark));
+}
+
+/* Lava: dark rock with glowing cracks */
+.ssd-lava .ssd-face {
+  background:
+    linear-gradient(112deg, transparent 45%, var(--ssd-glowc) 47.5%, transparent 50%),
+    linear-gradient(34deg, transparent 60%, var(--ssd-glowc) 61.8%, transparent 63.5%),
+    linear-gradient(172deg, transparent 24%, var(--ssd-glowc) 25.8%, transparent 27.5%),
+    radial-gradient(circle at 50% 120%, rgb(255 90 20 / 0.35), transparent 60%),
+    linear-gradient(160deg, var(--ssd-edge), #120907);
+}
+
+.ssd-lava .ssd-label {
+  text-shadow: 0 0 3px var(--ssd-glowc), 0 0 8px var(--ssd-glowc);
+}
+
+/* Galaxy: the night sky with stars and clouds in the die color and the second color */
+.ssd-galaxy .ssd-face {
+  background:
+    radial-gradient(1px 1px at 18% 28%, #ffffff, transparent),
+    radial-gradient(1px 1px at 72% 62%, #ffffff, transparent),
+    radial-gradient(1.5px 1.5px at 42% 78%, #ffffff, transparent),
+    radial-gradient(1px 1px at 84% 18%, #ffffff, transparent),
+    radial-gradient(1.2px 1.2px at 58% 40%, #fff6d8, transparent),
+    radial-gradient(1px 1px at 28% 60%, #d8e8ff, transparent),
+    radial-gradient(ellipse at 30% 70%, var(--ssd-glass-light), transparent 60%),
+    radial-gradient(ellipse at 78% 28%, color-mix(in srgb, var(--ssd-second) 55%, transparent), transparent 55%),
+    linear-gradient(160deg, #15122e, #06050f);
+}
+
+.ssd-face.ssd-rim {
+  background: var(--ssd-edge);
+}
+
+/* Patterns in the second color, between the surface and the numbers */
+.ssd-face::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.ssd-pattern-blend .ssd-face::before {
+  background: linear-gradient(160deg, transparent 12%, var(--ssd-second) 100%);
+  opacity: 0.9;
+}
+
+.ssd-pattern-speckled .ssd-face::before {
+  background:
+    radial-gradient(circle, var(--ssd-second) 0 0.9px, transparent 1.5px) 0 0 / 7px 7px,
+    radial-gradient(circle, var(--ssd-second) 0 0.7px, transparent 1.3px) 3px 4px / 11px 9px;
+  opacity: 0.85;
+}
+
+.ssd-pattern-marble .ssd-face::before {
+  background:
+    linear-gradient(118deg, transparent 36%, var(--ssd-second) 40%, transparent 45%),
+    linear-gradient(62deg, transparent 56%, var(--ssd-second) 59%, transparent 63%),
+    linear-gradient(164deg, transparent 18%, var(--ssd-second) 21%, transparent 25%),
+    linear-gradient(28deg, transparent 72%, var(--ssd-second) 74%, transparent 77%);
+  opacity: 0.6;
+  filter: blur(0.7px);
+}
+
+.ssd-label {
+  position: absolute;
+  z-index: 1;
+  color: var(--ssd-text);
+  font-family: var(--ssd-font, "Signika", sans-serif);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  text-shadow: 0 0 2px var(--ssd-halo, transparent);
+  user-select: none;
+}
+
+.ssd-metal .ssd-label {
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.35), 0 -1px 0 rgb(0 0 0 / 0.45);
+}
+
+.ssd-label.ssd-under {
+  text-decoration: underline;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.06em;
+}
+
+/* -------------------------------------------- */
+/*  Light and particles                         */
+/* -------------------------------------------- */
+
+/* A glowing die: numbers shine, every face has a light core */
+.ssd-lit-soft .ssd-label {
+  text-shadow: 0 0 3px var(--ssd-glowc), 0 0 7px var(--ssd-glowc);
+}
+
+.ssd-lit-strong .ssd-label {
+  color: #fffdf5;
+  text-shadow: 0 0 2px var(--ssd-glowc), 0 0 6px var(--ssd-glowc), 0 0 12px var(--ssd-glowc);
+}
+
+.ssd-lit-soft .ssd-face::after,
+.ssd-lit-strong .ssd-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, var(--ssd-glowc), transparent 68%);
+  opacity: 0.32;
+  pointer-events: none;
+}
+
+.ssd-lit-strong .ssd-face::after {
+  opacity: 0.6;
+}
+
+/* The light a glowing die casts on the table */
+.ssd-aura {
+  position: absolute;
+  left: calc(var(--ssd-size) * -1.2);
+  top: calc(var(--ssd-size) * -1.2);
+  width: calc(var(--ssd-size) * 2.4);
+  height: calc(var(--ssd-size) * 2.4);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--ssd-glowc), transparent 75%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-particle {
+  position: absolute;
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-p-sparks {
+  background: #fffdf2;
+  box-shadow: 0 0 4px 1px var(--ssd-glowc), 0 0 9px 2px var(--ssd-glowc);
+}
+
+.ssd-p-embers {
+  left: -2.5px;
+  top: -2.5px;
+  width: 5px;
+  height: 5px;
+  background: radial-gradient(circle, var(--ssd-tint-light, #fff3c4), var(--ssd-tint, #ff8c2a) 55%, var(--ssd-tint-dark, #e0401a));
+  box-shadow: 0 0 6px 2px color-mix(in srgb, var(--ssd-tint, rgb(255 120 30)) 70%, transparent);
+}
+
+.ssd-p-stars {
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+  background: radial-gradient(circle, #ffffff 0 18%, var(--ssd-glowc) 45%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+.ssd-p-smoke {
+  left: -10px;
+  top: -10px;
+  width: 20px;
+  height: 20px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ssd-tint, rgb(214 208 200)) 55%, transparent), transparent);
+}
+
+.ssd-p-max {
+  background: #fffbe6;
+  box-shadow: 0 0 5px 2px #ffd66b, 0 0 12px 3px rgb(255 190 40 / 0.7);
+}
+
+.ssd-p-min {
+  background: #ffd6cc;
+  box-shadow: 0 0 5px 2px #ff4a3a, 0 0 10px 3px rgb(150 20 10 / 0.7);
+}
+
+/* -------------------------------------------- */
+/*  Auras                                       */
+/* -------------------------------------------- */
+
+/* On the table at the foot of the die (t) and floating around it (a); each part loops on its own */
+.ssd-fxt,
+.ssd-fxa {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+.ssd-fxa {
+  transform-style: preserve-3d;
+}
+
+.ssd-fxt i,
+.ssd-fxa i {
+  position: absolute;
+  display: block;
+  animation-delay: var(--ssd-d, 0s);
+  animation-iteration-count: infinite;
+}
+
+/* Pulse and heartbeat: the light inside the die beats, and its light pool on the table with it */
+.ssd-beat-pulse .ssd-face::after,
+.ssd-beat-heartbeat .ssd-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, var(--ssd-glowc), transparent 72%);
+  opacity: 0.2;
+  pointer-events: none;
+  animation: ssd-face-pulse 1.6s ease-in-out infinite;
+}
+
+.ssd-beat-heartbeat .ssd-face::after {
+  animation: ssd-face-heartbeat 1.3s ease-out infinite;
+}
+
+.ssd-fx-pulse i,
+.ssd-fx-heartbeat i {
+  left: calc(var(--ssd-size) * -1.1);
+  top: calc(var(--ssd-size) * -1.1);
+  width: calc(var(--ssd-size) * 2.2);
+  height: calc(var(--ssd-size) * 2.2);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--ssd-glowc), var(--ssd-glow-soft) 45%, transparent 75%);
+  animation-name: ssd-pool-pulse;
+  animation-duration: 1.6s;
+  animation-timing-function: ease-in-out;
+  animation-delay: 0s;
+}
+
+.ssd-fx-heartbeat i {
+  animation-name: ssd-pool-heartbeat;
+  animation-duration: 1.3s;
+  animation-timing-function: ease-out;
+}
+
+@keyframes ssd-face-pulse {
+  0%, 100% { opacity: 0.12; }
+  50% { opacity: 0.62; }
+}
+
+@keyframes ssd-face-heartbeat {
+  0%, 55%, 100% { opacity: 0.12; }
+  12% { opacity: 0.7; }
+  22% { opacity: 0.25; }
+  34% { opacity: 0.6; }
+}
+
+@keyframes ssd-pool-pulse {
+  0%, 100% { transform: scale(0.8); opacity: 0.3; }
+  50% { transform: scale(1.15); opacity: 0.85; }
+}
+
+@keyframes ssd-pool-heartbeat {
+  0%, 55%, 100% { transform: scale(0.82); opacity: 0.28; }
+  12% { transform: scale(1.18); opacity: 0.9; }
+  22% { transform: scale(0.92); opacity: 0.45; }
+  34% { transform: scale(1.1); opacity: 0.8; }
+}
+
+/* Ripples spreading over the table */
+.ssd-fx-ripples i {
+  left: calc(var(--ssd-size) * -0.6);
+  top: calc(var(--ssd-size) * -0.6);
+  width: calc(var(--ssd-size) * 1.2);
+  height: calc(var(--ssd-size) * 1.2);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 60%, var(--ssd-glowc) 70%, var(--ssd-glow-soft) 76%, transparent 86%);
+  animation: ssd-ripple 2.4s linear infinite;
+}
+
+.ssd-fx-ripples i:nth-child(2) { animation-delay: -0.8s; }
+.ssd-fx-ripples i:nth-child(3) { animation-delay: -1.6s; }
+
+@keyframes ssd-ripple {
+  from { transform: scale(0.45); opacity: 0.85; }
+  to { transform: scale(2.7); opacity: 0; }
+}
+
+/* Rays of light turning slowly behind the die */
+.ssd-fx-rays i {
+  left: calc(var(--ssd-size) * -1.5);
+  top: calc(var(--ssd-size) * -1.5);
+  width: calc(var(--ssd-size) * 3);
+  height: calc(var(--ssd-size) * 3);
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--ssd-glow-soft) 0 7deg, transparent 7deg 26deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 18%, transparent 78%);
+  mask-image: radial-gradient(closest-side, #000 18%, transparent 78%);
+  opacity: 0.85;
+  animation: ssd-turn 9s linear infinite;
+}
+
+/* Motes of light circling the die, in front of it and behind it */
+.ssd-fx-motes i {
+  left: calc(var(--ssd-size) * -0.08);
+  top: calc(var(--ssd-size) * -0.08);
+  width: calc(var(--ssd-size) * 0.16);
+  height: calc(var(--ssd-size) * 0.16);
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 22%, var(--ssd-glowc) 45%, transparent 72%);
+}
+
+
+/* Flames licking up around the die */
+.ssd-fx-flames i {
+  left: calc(var(--ssd-size) * -0.15);
+  top: calc(var(--ssd-size) * -0.25);
+  width: calc(var(--ssd-size) * 0.3);
+  height: calc(var(--ssd-size) * 0.5);
+  border-radius: 50% 50% 45% 45% / 62% 62% 38% 38%;
+  background: radial-gradient(ellipse 60% 70% at 50% 72%, #fffbe0 0 12%, #ffd25a 30%, var(--ssd-glowc) 55%, transparent 74%);
+  opacity: 0;
+}
+
+
+/* Lightning flashing around the die */
+.ssd-fx-storm i {
+  left: calc(var(--ssd-size) * -0.11);
+  top: calc(var(--ssd-size) * -0.4);
+  width: calc(var(--ssd-size) * 0.22);
+  height: calc(var(--ssd-size) * 0.8);
+  background: linear-gradient(180deg, #ffffff, var(--ssd-glowc));
+  clip-path: polygon(55% 0, 20% 45%, 52% 45%, 30% 100%, 85% 38%, 55% 38%, 80% 0);
+  opacity: 0;
+  animation: ssd-zap 1.7s steps(1, end) infinite;
+  animation-delay: var(--ssd-d, 0s);
+}
+
+.ssd-fx-storm i {
+  transform: rotate(var(--ssd-a)) translateY(calc(var(--ssd-size) * -0.62)) scale(var(--ssd-k, 1));
+}
+
+@keyframes ssd-zap {
+  0%, 100% { opacity: 0; }
+  3% { opacity: 1; }
+  7% { opacity: 0.25; }
+  10% { opacity: 1; }
+  16% { opacity: 0; }
+}
+
+/* Frost mist drifting around the foot of the die */
+.ssd-fx-frost i {
+  left: calc(var(--ssd-size) * -0.3);
+  top: calc(var(--ssd-size) * -0.3);
+  width: calc(var(--ssd-size) * 0.6);
+  height: calc(var(--ssd-size) * 0.6);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ssd-tint-light, rgb(235 248 255)) 75%, transparent), var(--ssd-glow-soft) 50%, transparent 76%);
+  opacity: 0;
+}
+
+
+/* Dark wisps rising from the die */
+.ssd-fx-shadow i {
+  left: calc(var(--ssd-size) * -0.22);
+  top: calc(var(--ssd-size) * -0.22);
+  width: calc(var(--ssd-size) * 0.44);
+  height: calc(var(--ssd-size) * 0.44);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ssd-tint-dark, rgb(12 4 20)) 92%, transparent) 0 30%, color-mix(in srgb, var(--ssd-tint-dark, rgb(40 14 60)) 60%, transparent) 48%, var(--ssd-glow-soft) 62%, transparent 80%);
+  opacity: 0;
+}
+
+
+/* -------------------------------------------- */
+/*  Landings                                    */
+/* -------------------------------------------- */
+
+.ssd-land-wave {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.7);
+  top: calc(var(--ssd-size) * -0.7);
+  width: calc(var(--ssd-size) * 1.4);
+  height: calc(var(--ssd-size) * 1.4);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 55%, var(--ssd-glow-soft) 66%, var(--ssd-glowc) 74%, transparent 90%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* A circle of runes: two rings, a band of marks and a six pointed star */
+.ssd-land-runes {
+  position: absolute;
+  left: calc(var(--ssd-size) * -1.1);
+  top: calc(var(--ssd-size) * -1.1);
+  width: calc(var(--ssd-size) * 2.2);
+  height: calc(var(--ssd-size) * 2.2);
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, transparent 88%, var(--ssd-glowc) 90%, transparent 93%),
+    radial-gradient(closest-side, transparent 70%, var(--ssd-glowc) 72%, transparent 75%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-land-runes b {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(var(--ssd-glowc) 0 2deg, transparent 2deg 9deg, var(--ssd-glowc) 9deg 10deg, transparent 10deg 24deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 76%, #000 78%, #000 86%, transparent 88%);
+  mask-image: radial-gradient(closest-side, transparent 76%, #000 78%, #000 86%, transparent 88%);
+}
+
+.ssd-land-runes::before,
+.ssd-land-runes::after {
+  content: "";
+  position: absolute;
+  inset: 20%;
+  background: var(--ssd-glow-soft);
+  clip-path: polygon(50% 0, 93.3% 75%, 6.7% 75%);
+}
+
+.ssd-land-runes::after {
+  clip-path: polygon(50% 100%, 93.3% 25%, 6.7% 25%);
+}
+
+.ssd-land-dust {
+  left: -8px;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ssd-tint, rgb(176 158 128)) 65%, transparent), transparent);
+}
+
+.ssd-land-sparkle {
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+  background: radial-gradient(circle, #ffffff 0 22%, var(--ssd-glowc) 50%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+.ssd-land-splash {
+  left: -3.5px;
+  top: -3.5px;
+  width: 7px;
+  height: 7px;
+  background: radial-gradient(circle at 35% 30%, #ffffff 0 18%, var(--ssd-glowc) 45%, var(--ssd-glow-soft) 80%);
+}
+
+/* -------------------------------------------- */
+/*  Inside a see-through die                    */
+/* -------------------------------------------- */
+
+.ssd-core {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+
+/* A little below the middle, so the number on top does not cover it */
+.ssd-core-in {
+  position: absolute;
+  margin-top: calc(var(--ssd-size) * 0.13);
+  left: calc(var(--ssd-size) * -0.25);
+  top: calc(var(--ssd-size) * -0.25);
+  width: calc(var(--ssd-size) * 0.5);
+  height: calc(var(--ssd-size) * 0.5);
+}
+
+/* A glowing orb that breathes. Its glow is part of the gradient: Firefox draws blurred shadows hard in 3D */
+.ssd-core-orb .ssd-core-in {
+  left: calc(var(--ssd-size) * -0.31);
+  top: calc(var(--ssd-size) * -0.31);
+  width: calc(var(--ssd-size) * 0.62);
+  height: calc(var(--ssd-size) * 0.62);
+  margin-top: calc(var(--ssd-size) * 0.07);
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 13%, var(--ssd-glowc) 27%, var(--ssd-glow-soft) 40%, transparent 68%);
+  animation: ssd-breathe 1.8s ease-in-out infinite;
+}
+
+/* A flickering flame */
+.ssd-core-flame .ssd-core-in {
+  left: calc(var(--ssd-size) * -0.2);
+  top: calc(var(--ssd-size) * -0.36);
+  width: calc(var(--ssd-size) * 0.4);
+  height: calc(var(--ssd-size) * 0.62);
+  border-radius: 50% 50% 45% 45% / 62% 62% 38% 38%;
+  background: radial-gradient(ellipse 60% 70% at 50% 72%, #fffbe0 0 14%, #ffd25a 32%, var(--ssd-glowc) 55%, transparent 74%);
+  transform-origin: 50% 85%;
+  animation: ssd-flicker 0.22s ease-in-out infinite alternate;
+}
+
+/* A turning swirl */
+.ssd-core-swirl .ssd-core-in {
+  left: calc(var(--ssd-size) * -0.26);
+  top: calc(var(--ssd-size) * -0.26);
+  width: calc(var(--ssd-size) * 0.52);
+  height: calc(var(--ssd-size) * 0.52);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #ffffff 0 12%, transparent 26%),
+    conic-gradient(#ffffff, var(--ssd-glowc) 10%, transparent 26%, #ffffff 50%, var(--ssd-glowc) 60%, transparent 76%, #ffffff);
+  -webkit-mask-image: radial-gradient(circle, #000 30%, transparent 70%);
+  mask-image: radial-gradient(circle, #000 30%, transparent 70%);
+  animation: ssd-turn 2.6s linear infinite;
+}
+
+/* Fireflies on their orbits */
+.ssd-core-fireflies .ssd-core-in i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--ssd-size) * 0.14);
+  height: calc(var(--ssd-size) * 0.14);
+  margin: calc(var(--ssd-size) * -0.07) 0 0 calc(var(--ssd-size) * -0.07);
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 22%, var(--ssd-glowc) 48%, transparent 72%);
+}
+
+/* An eye that looks around and blinks */
+.ssd-core-eye .ssd-core-in {
+  left: calc(var(--ssd-size) * -0.27);
+  top: calc(var(--ssd-size) * -0.17);
+  width: calc(var(--ssd-size) * 0.54);
+  height: calc(var(--ssd-size) * 0.34);
+  border-radius: 50%;
+  background: radial-gradient(ellipse at 50% 50%, #ffffff 40%, #f0d8d8 75%, #c99 100%);
+  overflow: hidden;
+  animation: ssd-blink 4.2s ease-in-out infinite;
+}
+
+.ssd-core-eye .ssd-core-in i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--ssd-size) * 0.21);
+  height: calc(var(--ssd-size) * 0.21);
+  margin: calc(var(--ssd-size) * -0.105) 0 0 calc(var(--ssd-size) * -0.105);
+  border-radius: 50%;
+  background: radial-gradient(circle, #050505 0 26%, var(--ssd-glowc) 32%, color-mix(in srgb, var(--ssd-glowc) 60%, #000) 100%);
+  animation: ssd-look 3.6s ease-in-out infinite;
+}
+
+/* A four pointed star that turns */
+.ssd-core-star .ssd-core-in {
+  left: calc(var(--ssd-size) * -0.3);
+  top: calc(var(--ssd-size) * -0.3);
+  width: calc(var(--ssd-size) * 0.6);
+  height: calc(var(--ssd-size) * 0.6);
+  background: radial-gradient(circle, #ffffff 0 20%, var(--ssd-glowc) 50%);
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  animation: ssd-twinkle 2.4s ease-in-out infinite;
+}
+
+@keyframes ssd-breathe {
+  50% { transform: scale(1.18); opacity: 0.85; }
+}
+
+@keyframes ssd-flicker {
+  0% { transform: scale(1, 1) skewX(0deg); }
+  50% { transform: scale(0.94, 1.08) skewX(-4deg); }
+  100% { transform: scale(1.04, 0.95) skewX(3deg); }
+}
+
+@keyframes ssd-turn {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ssd-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  94% { transform: scaleY(0.08); }
+}
+
+@keyframes ssd-look {
+  0%, 18% { transform: translate(0, 0); }
+  28%, 45% { transform: translate(-60%, -8%); }
+  55%, 72% { transform: translate(60%, 10%); }
+  82%, 100% { transform: translate(0, 0); }
+}
+
+@keyframes ssd-twinkle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(45deg) scale(0.75); }
+}
+
+/* Effects off on this screen: what is inside holds still */
+.ssd-calm .ssd-core-in,
+.ssd-calm .ssd-core-in i {
+  animation: none;
+}
+
+/* The ring of light when a highest or lowest result lands */
+.ssd-ring {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.6);
+  top: calc(var(--ssd-size) * -0.6);
+  width: calc(var(--ssd-size) * 1.2);
+  height: calc(var(--ssd-size) * 1.2);
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Drawn as gradients, not borders and shadows, so every browser shows the same soft ring */
+.ssd-ring-max {
+  background: radial-gradient(closest-side, transparent 60%, rgb(255 214 107 / 0.45) 70%, #fff1c0 78%,
+    rgb(255 200 60 / 0.5) 84%, transparent 96%);
+}
+
+.ssd-ring-min {
+  background: radial-gradient(closest-side, transparent 60%, rgb(200 40 26 / 0.45) 70%, #ff7a62 78%,
+    rgb(170 20 10 / 0.5) 84%, transparent 96%);
+}
+
+.ssd-shade {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-shadow {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.55);
+  top: calc(var(--ssd-size) * -0.55);
+  width: calc(var(--ssd-size) * 1.1);
+  height: calc(var(--ssd-size) * 1.1);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(0 0 0 / 0.6), rgb(0 0 0 / 0.28) 55%, transparent);
+  opacity: 0;
+}
+
+.ssd-halo {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.85);
+  top: calc(var(--ssd-size) * -0.85);
+  width: calc(var(--ssd-size) * 1.7);
+  height: calc(var(--ssd-size) * 1.7);
+  border-radius: 50%;
+  opacity: 0;
+  transition: opacity 0.35s ease-out;
+}
+
+.ssd-halo.ssd-glow-max {
+  background: radial-gradient(closest-side, rgb(255 214 90 / 0.85), rgb(255 186 40 / 0.35) 55%, transparent);
+}
+
+.ssd-halo.ssd-glow-min {
+  background: radial-gradient(closest-side, rgb(226 58 46 / 0.8), rgb(200 30 30 / 0.3) 55%, transparent);
+}
+
+.ssd-halo.ssd-lit {
+  opacity: 1;
+  animation: ssd-pulse 1.1s ease-in-out 2;
+}
+
+@keyframes ssd-pulse {
+  50% { scale: 1.18; }
+}
+
+.ssd-more {
+  position: absolute;
+  right: 6px;
+  bottom: 4px;
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: rgb(0 0 0 / 0.6);
+  color: #fff;
+  font-family: "Signika", var(--font-primary, sans-serif), sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.ssd-more.ssd-lit {
+  opacity: 1;
+}
+
+/* -------------------------------------------- */
+/*  Chat cards waiting for their dice           */
+/* -------------------------------------------- */
+
+/* The content keeps its place, so the chat does not jump. It shows again on its own after 4 s, whatever happens. */
+.chat-message.ssd-waiting .message-content,
+.chat-message.ssd-waiting .flavor-text {
+  visibility: hidden;
+  animation: ssd-show 0s linear 4s forwards;
+}
+
+.chat-message.ssd-waiting .message-content {
+  position: relative;
+}
+
+.chat-message.ssd-waiting .message-content::after {
+  content: "";
+  position: absolute;
+  inset: 2px 0;
+  min-height: 18px;
+  border-radius: 6px;
+  visibility: visible;
+  background: linear-gradient(100deg, transparent 20%, rgb(128 128 128 / 0.28) 50%, transparent 80%);
+  background-size: 220% 100%;
+  animation: ssd-shimmer 0.9s linear infinite, ssd-hide 0s linear 4s forwards;
+}
+
+@keyframes ssd-show {
+  to { visibility: visible; }
+}
+
+@keyframes ssd-hide {
+  to { visibility: hidden; }
+}
+
+@keyframes ssd-shimmer {
+  from { background-position: 110% 0; }
+  to { background-position: -110% 0; }
+}
+
+/* -------------------------------------------- */
+/*  Window "My dice"                            */
+/* -------------------------------------------- */
+
+.ssd-app .ssd-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Two columns: the look on the left (preview, ready looks, classes, color), its parts on the right. A narrow
+   window shows them one under the other. */
+.ssd-app .window-content {
+  container-type: inline-size;
+}
+
+.ssd-app .ssd-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 14px;
+  align-items: start;
+}
+
+.ssd-app .ssd-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+
+/* The parts share one width of names (measured after rendering), so every field starts at the same place */
+.ssd-app .ssd-fields .ssd-grid {
+  grid-template-columns: var(--ssd-keys, auto) minmax(0, 1fr);
+}
+
+@container (max-width: 720px) {
+  .ssd-app .ssd-columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ssd-app .ssd-center {
+  text-align: center;
+}
+
+.ssd-app .ssd-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  height: 116px;
+  border-radius: 8px;
+  background: radial-gradient(ellipse at 50% 60%, rgb(127 127 127 / 0.18), transparent 70%);
+  perspective: 700px;
+}
+
+.ssd-app .ssd-preview-die {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  transform-style: preserve-3d;
+}
+
+.ssd-app .ssd-preview-spin {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform-style: preserve-3d;
+  animation: ssd-spin 14s linear infinite;
+}
+
+.ssd-app .ssd-preview-1 .ssd-preview-spin {
+  animation-duration: 10s;
+  animation-direction: reverse;
+}
+
+.ssd-app .ssd-preview-2 .ssd-preview-spin {
+  animation-duration: 12s;
+}
+
+.ssd-app .ssd-preview-aura {
+  left: 50%;
+  top: 50%;
+  margin: calc(var(--ssd-size) * -1.2) 0 0 calc(var(--ssd-size) * -1.2);
+  opacity: 0.55;
+}
+
+.ssd-app .ssd-preview-aura.ssd-aura-strong {
+  opacity: 0.9;
+}
+
+.ssd-app .ssd-preview-core,
+.ssd-app .ssd-preview-fx {
+  left: 50%;
+  top: 50%;
+}
+
+.ssd-app .ssd-random {
+  justify-content: center;
+}
+
+.ssd-app .ssd-wide {
+  grid-column: 1 / -1;
+}
+
+.ssd-app .window-content {
+  max-height: 88vh;
+  overflow-y: auto;
+}
+
+.ssd-app .ssd-presets {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px 0 8px;
+}
+
+.ssd-app .ssd-preset {
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid rgb(0 0 0 / 0.4);
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, var(--ssd-b), var(--ssd-a) 60%);
+}
+
+.ssd-app .ssd-preset:hover,
+.ssd-app .ssd-preset:focus-visible {
+  outline: 2px solid var(--color-warm-2, #ee9b3a);
+  outline-offset: 1px;
+}
+
+.ssd-app .ssd-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.ssd-app .ssd-grid legend {
+  grid-column: 1 / -1;
+}
+
+.ssd-app .ssd-key {
+  font-weight: 600;
+}
+
+.ssd-app .ssd-pair {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ssd-app .ssd-pair select {
+  flex: 1;
+}
+
+.ssd-app .ssd-pair input[type="color"],
+.ssd-app .ssd-row input[type="color"] {
+  flex: 0 0 34px;
+  width: 34px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.ssd-app .ssd-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+.ssd-app .ssd-buttons button {
+  flex: 1;
+}
+
+.ssd-app .ssd-buttons .ssd-reset {
+  flex: 0 0 auto;
+}
+
+/* The looks of the classes: round buttons in their colors with their icon */
+.ssd-app .ssd-classes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+  margin: 2px 0 6px;
+}
+
+.ssd-app .ssd-class {
+  flex: 0 0 30px;
+  width: 30px;
+  height: 30px;
+  min-height: 0;
+  padding: 0;
+  border: 1px solid rgb(0 0 0 / 0.45);
+  border-radius: 50%;
+  background: radial-gradient(circle at 32% 28%, var(--ssd-b), var(--ssd-a) 62%);
+  color: #ffffff;
+  font-size: 13px;
+  text-shadow: 0 0 2px #000000, 0 0 5px var(--ssd-c);
+}
+
+.ssd-app .ssd-class:hover,
+.ssd-app .ssd-class:focus-visible {
+  outline: 2px solid var(--color-warm-2, #ee9b3a);
+  outline-offset: 1px;
+}
+
+.ssd-app .ssd-class i {
+  margin: 0;
+}
+
+/* The ready look or class look taken, while it is unchanged */
+.ssd-app .ssd-preset.ssd-active,
+.ssd-app .ssd-class.ssd-active {
+  outline: 2px solid var(--color-warm-1, #ff6400);
+  outline-offset: 2px;
+  box-shadow: 0 0 6px var(--color-warm-1, #ff6400);
+}
+
+/* A color field that is still automatic looks lighter; the small button on its corner takes an own color back */
+.ssd-app .ssd-pick {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.ssd-app .ssd-pick input[data-auto] {
+  opacity: 0.55;
+  outline: 1px dashed rgb(127 127 127 / 0.7);
+  outline-offset: -1px;
+}
+
+.ssd-app .ssd-auto {
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 16px;
+  height: 16px;
+  min-height: 0;
+  padding: 0;
+  border-radius: 50%;
+  font-size: 9px;
+  line-height: 14px;
+}
+
+.ssd-app .ssd-auto i {
+  margin: 0;
+}
+
+/* Settings: the fields of the GM's own rule while another rule is picked */
+.form-group.ssd-off {
+  opacity: 0.55;
+}
+
+@keyframes ssd-spin {
+  from { transform: rotateX(16deg) rotateY(0deg); }
+  to { transform: rotateX(16deg) rotateY(360deg); }
+}
+
+.ssd-app .ssd-card {
+  margin: 0;
+  padding: 6px 10px 8px;
+  border: 1px solid var(--color-border, rgb(127 127 127 / 0.4));
+  border-radius: 6px;
+}
+
+.ssd-app .ssd-card legend {
+  padding: 0 4px;
+  font-weight: 700;
+}
+
+.ssd-app .ssd-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+}
+
+.ssd-app .ssd-row.ssd-off {
+  opacity: 0.55;
+}
+
+.ssd-app .ssd-row input[type="color"] {
+  width: 34px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  background: none;
+}
+
+.ssd-app .ssd-swatch {
+  display: inline-block;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgb(0 0 0 / 0.35);
+  background: var(--ssd-swatch);
+}
+
+.ssd-app .ssd-choice {
+  display: flex;
+  gap: 18px;
+}
+
+.ssd-app .ssd-choice label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ssd-app .ssd-hint {
+  margin: 0;
+  font-size: var(--font-size-12, 12px);
+  opacity: 0.8;
+}
+
+.ssd-app .ssd-indent {
+  margin: -2px 0 4px 26px;
+}
+
+.ssd-app .ssd-test {
+  justify-content: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ssd-app .ssd-preview-spin,
+  .ssd-core-in,
+  .ssd-core-in i,
+  .ssd-halo.ssd-lit,
+  .chat-message.ssd-waiting .message-content::after {
+    animation-duration: 0s;
+  }
+}
+
+/* Sephral's Swift Dice: more materials, patterns, glows, trails, auras, landings, things inside, the props of the
+   throw styles and the big moments. Glows are gradients, not blurred shadows: Firefox draws those hard in 3D. */
+
+/* -------------------------------------------- */
+/*  Materials                                   */
+/* -------------------------------------------- */
+
+/* Chrome: hard bright and dark bands, like a mirror of the room */
+.ssd-chrome .ssd-face {
+  background: linear-gradient(160deg, #ffffff 0%, var(--ssd-light) 14%, var(--ssd-dark) 30%, #101014 44%,
+    var(--ssd-light) 56%, #ffffff 64%, var(--ssd-body) 82%, var(--ssd-dark) 100%);
+}
+
+.ssd-chrome .ssd-label {
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.4), 0 -1px 0 rgb(0 0 0 / 0.5);
+}
+
+/* Frosted glass: see-through, milky, with a fine grain */
+.ssd-frosted .ssd-face {
+  background:
+    radial-gradient(circle, rgb(255 255 255 / 0.22) 0 0.6px, transparent 1.1px) 0 0 / 3px 3px,
+    linear-gradient(150deg, var(--ssd-glass-light), var(--ssd-glass-body) 50%, var(--ssd-glass-dark)),
+    rgb(255 255 255 / 0.12);
+}
+
+/* Ice: clear and bluish, with white cracks */
+.ssd-ice .ssd-face {
+  background:
+    linear-gradient(27deg, transparent 47%, rgb(255 255 255 / 0.7) 48%, transparent 50%),
+    linear-gradient(118deg, transparent 62%, rgb(255 255 255 / 0.55) 63%, transparent 64.5%),
+    linear-gradient(160deg, transparent 20%, rgb(255 255 255 / 0.45) 21%, transparent 22.5%),
+    linear-gradient(150deg, rgb(225 245 255 / 0.4), var(--ssd-glass-body) 55%, rgb(120 180 220 / 0.35));
+}
+
+/* Jade: milky green stone you can almost see into, with veins */
+.ssd-jade .ssd-face {
+  background:
+    linear-gradient(118deg, transparent 36%, color-mix(in srgb, var(--ssd-second) 55%, transparent) 40%, transparent 46%),
+    linear-gradient(62deg, transparent 58%, color-mix(in srgb, var(--ssd-second) 40%, transparent) 61%, transparent 66%),
+    linear-gradient(150deg, var(--ssd-glass-light), color-mix(in srgb, var(--ssd-body) 55%, transparent) 50%, var(--ssd-glass-dark));
+}
+
+/* Holographic: a rainbow sheen over the die color */
+.ssd-holo .ssd-face {
+  background:
+    linear-gradient(120deg, rgb(255 154 223 / 0.55), rgb(154 215 255 / 0.55) 25%, rgb(178 255 176 / 0.5) 50%,
+      rgb(255 243 160 / 0.55) 75%, rgb(255 154 223 / 0.55)),
+    radial-gradient(circle at 30% 26%, #ffffff, var(--ssd-light) 30%, var(--ssd-body) 70%, var(--ssd-dark));
+}
+
+/* Carbon: a woven fiber with a gloss */
+.ssd-carbon .ssd-face {
+  background:
+    linear-gradient(150deg, rgb(255 255 255 / 0.16), transparent 40%),
+    repeating-linear-gradient(45deg, rgb(255 255 255 / 0.06) 0 3px, transparent 3px 6px),
+    repeating-linear-gradient(-45deg, #1d1e22 0 3px, #2d2f35 3px 6px);
+}
+
+/* Parchment: old paper with flecks */
+.ssd-parchment .ssd-face {
+  background:
+    radial-gradient(circle, rgb(110 80 40 / 0.25) 0 0.8px, transparent 1.4px) 1px 2px / 6px 7px,
+    radial-gradient(circle at 30% 30%, var(--ssd-light), var(--ssd-body) 60%, var(--ssd-dark));
+}
+
+/* Neon: dark glass with glowing edges */
+.ssd-neon .ssd-face {
+  background:
+    radial-gradient(closest-side, transparent 70%, color-mix(in srgb, var(--ssd-glowc) 70%, transparent) 92%, var(--ssd-glowc)),
+    linear-gradient(160deg, #15151f, #07070c);
+}
+
+.ssd-neon .ssd-label {
+  text-shadow: 0 0 2px var(--ssd-glowc), 0 0 6px var(--ssd-glowc);
+}
+
+.ssd-inner-frosted {
+  background: radial-gradient(circle at 50% 58%, rgb(255 255 255 / 0.3) 0, var(--ssd-glass-body) 50%, transparent 74%);
+}
+
+.ssd-inner-ice {
+  background: radial-gradient(circle at 50% 58%, rgb(150 210 245 / 0.45) 0, var(--ssd-glass-body) 50%, transparent 74%);
+}
+
+.ssd-inner-jade {
+  background: radial-gradient(circle at 50% 58%, var(--ssd-glass-dark) 0, color-mix(in srgb, var(--ssd-body) 60%, transparent) 50%, transparent 74%);
+}
+
+/* -------------------------------------------- */
+/*  Patterns                                    */
+/* -------------------------------------------- */
+
+.ssd-pattern-stripes .ssd-face::before {
+  background: repeating-linear-gradient(45deg, var(--ssd-second) 0 3px, transparent 3px 9px);
+  opacity: 0.55;
+}
+
+.ssd-pattern-dots .ssd-face::before {
+  background: radial-gradient(circle, var(--ssd-second) 0 1.7px, transparent 2.2px) 0 0 / 9px 9px;
+  opacity: 0.75;
+}
+
+.ssd-pattern-checker .ssd-face::before {
+  background: conic-gradient(var(--ssd-second) 25%, transparent 0 50%, var(--ssd-second) 0 75%, transparent 0) 0 0 / 10px 10px;
+  opacity: 0.35;
+}
+
+.ssd-pattern-scales .ssd-face::before {
+  background: radial-gradient(circle at 50% 0, transparent 52%, var(--ssd-second) 56%, transparent 64%) 0 0 / 10px 8px;
+  opacity: 0.6;
+}
+
+.ssd-pattern-swirl .ssd-face::before {
+  background: repeating-conic-gradient(from 0deg at 30% 30%, var(--ssd-second) 0 8deg, transparent 8deg 30deg);
+  opacity: 0.32;
+}
+
+.ssd-pattern-starry .ssd-face::before {
+  background:
+    radial-gradient(1px 1px at 15% 25%, #ffffff, transparent),
+    radial-gradient(1px 1px at 65% 15%, #ffffff, transparent),
+    radial-gradient(1.4px 1.4px at 40% 60%, var(--ssd-second), transparent),
+    radial-gradient(1px 1px at 80% 75%, #ffffff, transparent),
+    radial-gradient(1.2px 1.2px at 25% 85%, var(--ssd-second), transparent),
+    radial-gradient(1px 1px at 55% 40%, #ffffff, transparent);
+  opacity: 0.95;
+}
+
+/* -------------------------------------------- */
+/*  Glows                                       */
+/* -------------------------------------------- */
+
+.ssd-lit-flicker .ssd-label,
+.ssd-lit-rainbow .ssd-label {
+  text-shadow: 0 0 3px var(--ssd-glowc), 0 0 7px var(--ssd-glowc);
+}
+
+.ssd-lit-flicker .ssd-face::after,
+.ssd-lit-rainbow .ssd-face::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, var(--ssd-glowc), transparent 70%);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.ssd-lit-flicker .ssd-face::after {
+  animation: ssd-flicker-light 1.7s steps(1, end) infinite;
+}
+
+.ssd-lit-rainbow .ssd-face::after {
+  background: conic-gradient(#ff5a5a, #ffd25a, #7dff7a, #5ad8ff, #a77dff, #ff5ad8, #ff5a5a);
+  opacity: 0.4;
+  animation: ssd-hue 3s linear infinite;
+}
+
+.ssd-aura-flicker {
+  animation: ssd-flicker-pool 1.7s steps(1, end) infinite;
+}
+
+.ssd-aura-rainbow {
+  animation: ssd-hue 3s linear infinite;
+}
+
+@keyframes ssd-flicker-light {
+  0%, 100% { opacity: 0.4; }
+  12% { opacity: 0.2; }
+  20% { opacity: 0.5; }
+  38% { opacity: 0.28; }
+  45% { opacity: 0.45; }
+  70% { opacity: 0.22; }
+  78% { opacity: 0.42; }
+}
+
+@keyframes ssd-flicker-pool {
+  0%, 100% { filter: brightness(1); }
+  12% { filter: brightness(0.6); }
+  20% { filter: brightness(1.15); }
+  38% { filter: brightness(0.7); }
+  45% { filter: brightness(1.05); }
+  70% { filter: brightness(0.65); }
+}
+
+@keyframes ssd-hue {
+  to { filter: hue-rotate(360deg); }
+}
+
+/* -------------------------------------------- */
+/*  Trails                                      */
+/* -------------------------------------------- */
+
+.ssd-p-hearts,
+.ssd-land-hearts {
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  border-radius: 0;
+  background: radial-gradient(circle at 35% 30%, var(--ssd-tint-light, #ffd6e2), var(--ssd-tint, #ff4d7d) 55%, var(--ssd-tint-dark, #c4194a));
+  clip-path: polygon(50% 92%, 10% 52%, 4% 30%, 14% 12%, 32% 8%, 50% 24%, 68% 8%, 86% 12%, 96% 30%, 90% 52%);
+}
+
+.ssd-p-bubbles {
+  left: -6px;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  background: radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.9) 0 12%, transparent 22%),
+    radial-gradient(circle, transparent 55%, color-mix(in srgb, var(--ssd-glowc) 70%, #ffffff) 70%, transparent 76%);
+}
+
+.ssd-p-petals,
+.ssd-land-flowers {
+  left: -5px;
+  top: -3px;
+  width: 10px;
+  height: 6px;
+  border-radius: 80% 0 80% 0;
+  background: linear-gradient(135deg, var(--ssd-tint-light, #ffe0ec), var(--ssd-tint, #ff8fb4));
+}
+
+.ssd-land-flowers {
+  background: linear-gradient(135deg, #ffffff, var(--ssd-tint, hsl(var(--ssd-h, 330) 85% 70%)));
+}
+
+.ssd-p-snow {
+  left: -3.5px;
+  top: -3.5px;
+  width: 7px;
+  height: 7px;
+  background: radial-gradient(circle, var(--ssd-tint-light, #ffffff) 0 40%, color-mix(in srgb, var(--ssd-tint, rgb(235 248 255)) 60%, transparent) 60%, transparent 75%);
+}
+
+.ssd-p-confetti,
+.ssd-land-confetti,
+.ssd-moment-confetti {
+  left: -3px;
+  top: -5px;
+  width: 6px;
+  height: 10px;
+  border-radius: 1px;
+  background: var(--ssd-tint, hsl(var(--ssd-h, 40) 85% 60%));
+}
+
+.ssd-p-leaves {
+  left: -6px;
+  top: -4px;
+  width: 12px;
+  height: 8px;
+  border-radius: 0 80% 0 80%;
+  background: linear-gradient(135deg, var(--ssd-tint-light, #b6e07a), var(--ssd-tint, #4f8a2c));
+}
+
+.ssd-p-coins,
+.ssd-land-coins {
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  background: radial-gradient(circle at 35% 30%, var(--ssd-tint-light, #fff6c0) 0 15%, var(--ssd-tint, #f2c43a) 45%, var(--ssd-tint-dark, #b8860b) 80%, var(--ssd-tint-dark, #8a6208));
+}
+
+.ssd-p-notes {
+  left: -6px;
+  top: -9px;
+  width: 12px;
+  height: 18px;
+  border-radius: 0;
+  color: var(--ssd-glowc);
+  font-size: 16px;
+  line-height: 18px;
+  text-align: center;
+}
+
+.ssd-p-notes::before {
+  content: "\266A";
+}
+
+.ssd-p-glitter {
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 0;
+  background: radial-gradient(circle, #ffffff 0 25%, var(--ssd-tint, hsl(var(--ssd-h, 50) 90% 70%)) 55%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+.ssd-p-ghosts {
+  left: -7px;
+  top: -8px;
+  width: 14px;
+  height: 16px;
+  border-radius: 50% 50% 30% 30%;
+  background:
+    radial-gradient(circle at 35% 40%, #1a1a24 0 9%, transparent 11%),
+    radial-gradient(circle at 65% 40%, #1a1a24 0 9%, transparent 11%),
+    linear-gradient(180deg, color-mix(in srgb, var(--ssd-tint-light, #ffffff) 85%, transparent), color-mix(in srgb, var(--ssd-tint, rgb(220 235 255)) 25%, transparent));
+}
+
+/* -------------------------------------------- */
+/*  More auras                                  */
+/* -------------------------------------------- */
+
+/* A halo floats above the die and shimmers */
+.ssd-fx-halo i {
+  left: calc(var(--ssd-size) * -0.42);
+  top: calc(var(--ssd-size) * -0.42);
+  width: calc(var(--ssd-size) * 0.84);
+  height: calc(var(--ssd-size) * 0.84);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 66%, var(--ssd-glowc) 76%, #ffffff 80%, var(--ssd-glowc) 84%, transparent 94%);
+  transform: translateZ(calc(var(--ssd-size) * 0.8));
+  animation: ssd-shimmer-halo 2.4s ease-in-out infinite;
+}
+
+@keyframes ssd-shimmer-halo {
+  0%, 100% { opacity: 0.75; }
+  50% { opacity: 1; }
+}
+
+/* A planet ring around the die, in front of it and behind it */
+.ssd-fx-rings {
+  transform-style: preserve-3d;
+}
+
+.ssd-fx-rings i {
+  left: calc(var(--ssd-size) * -0.85);
+  top: calc(var(--ssd-size) * -0.85);
+  width: calc(var(--ssd-size) * 1.7);
+  height: calc(var(--ssd-size) * 1.7);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 62%, var(--ssd-glow-soft) 66%, var(--ssd-glowc) 72%,
+    transparent 75%, var(--ssd-glow-soft) 80%, transparent 86%);
+  animation: ssd-ring-turn 6s linear infinite;
+}
+
+@keyframes ssd-ring-turn {
+  from { transform: rotateX(68deg) rotateY(-12deg) rotateZ(0deg); }
+  to { transform: rotateX(68deg) rotateY(-12deg) rotateZ(360deg); }
+}
+
+.ssd-fx-twinkle i,
+.ssd-fx-sparkflies i {
+  left: calc(var(--ssd-size) * -0.07);
+  top: calc(var(--ssd-size) * -0.07);
+  width: calc(var(--ssd-size) * 0.14);
+  height: calc(var(--ssd-size) * 0.14);
+  opacity: 0;
+}
+
+.ssd-fx-twinkle i {
+  background: radial-gradient(circle, #ffffff 0 22%, var(--ssd-glowc) 50%);
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%);
+}
+
+.ssd-fx-sparkflies i {
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 20%, var(--ssd-glowc) 45%, transparent 70%);
+}
+
+.ssd-fx-bubbles i {
+  left: calc(var(--ssd-size) * -0.1);
+  top: calc(var(--ssd-size) * -0.1);
+  width: calc(var(--ssd-size) * 0.2);
+  height: calc(var(--ssd-size) * 0.2);
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.9) 0 12%, transparent 22%),
+    radial-gradient(circle, transparent 55%, color-mix(in srgb, var(--ssd-glowc) 70%, #ffffff) 70%, transparent 76%);
+}
+
+.ssd-fx-hearts i {
+  left: calc(var(--ssd-size) * -0.1);
+  top: calc(var(--ssd-size) * -0.1);
+  width: calc(var(--ssd-size) * 0.2);
+  height: calc(var(--ssd-size) * 0.2);
+  opacity: 0;
+  background: radial-gradient(circle at 35% 30%, #ffd6e2, var(--ssd-glowc) 55%, #c4194a);
+  clip-path: polygon(50% 92%, 10% 52%, 4% 30%, 14% 12%, 32% 8%, 50% 24%, 68% 8%, 86% 12%, 96% 30%, 90% 52%);
+}
+
+.ssd-fx-snowfall i {
+  left: calc(var(--ssd-size) * -0.05);
+  top: calc(var(--ssd-size) * -0.05);
+  width: calc(var(--ssd-size) * 0.1);
+  height: calc(var(--ssd-size) * 0.1);
+  border-radius: 50%;
+  opacity: 0;
+  background: radial-gradient(circle, var(--ssd-tint-light, #ffffff) 0 40%, color-mix(in srgb, var(--ssd-tint, rgb(235 248 255)) 60%, transparent) 60%, transparent 75%);
+}
+
+/* Butterflies circle the die and flap their wings */
+.ssd-fx-butterflies i {
+  left: calc(var(--ssd-size) * -0.12);
+  top: calc(var(--ssd-size) * -0.1);
+  width: calc(var(--ssd-size) * 0.24);
+  height: calc(var(--ssd-size) * 0.2);
+}
+
+.ssd-fx-butterflies b {
+  position: absolute;
+  inset: 0;
+  animation: ssd-flap 0.32s ease-in-out infinite alternate;
+}
+
+.ssd-fx-butterflies b::before,
+.ssd-fx-butterflies b::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 50%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 40%, #ffffff 0 12%, var(--ssd-glowc) 40%, color-mix(in srgb, var(--ssd-glowc) 50%, #000) 100%);
+}
+
+.ssd-fx-butterflies b::before {
+  left: 0;
+  border-radius: 80% 20% 40% 70%;
+}
+
+.ssd-fx-butterflies b::after {
+  right: 0;
+  border-radius: 20% 80% 70% 40%;
+}
+
+@keyframes ssd-flap {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0.25); }
+}
+
+/* A circle of runes turning slowly under the die */
+.ssd-fx-runecircle i,
+.ssd-fx-vortex i {
+  left: calc(var(--ssd-size) * -1);
+  top: calc(var(--ssd-size) * -1);
+  width: calc(var(--ssd-size) * 2);
+  height: calc(var(--ssd-size) * 2);
+  border-radius: 50%;
+}
+
+.ssd-fx-runecircle i {
+  background:
+    radial-gradient(closest-side, transparent 88%, var(--ssd-glowc) 90%, transparent 93%),
+    radial-gradient(closest-side, transparent 70%, var(--ssd-glowc) 72%, transparent 75%),
+    repeating-conic-gradient(var(--ssd-glow-soft) 0 3deg, transparent 3deg 15deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 66%, #000 68%);
+  mask-image: radial-gradient(closest-side, transparent 66%, #000 68%);
+  animation: ssd-turn 12s linear infinite;
+}
+
+/* A dark whirl under the die */
+.ssd-fx-vortex i {
+  background: repeating-conic-gradient(color-mix(in srgb, var(--ssd-tint-dark, rgb(20 8 34)) 75%, transparent) 0 18deg, color-mix(in srgb, var(--ssd-glowc) 35%, transparent) 30deg, color-mix(in srgb, var(--ssd-tint-dark, rgb(20 8 34)) 75%, transparent) 45deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent 75%);
+  mask-image: radial-gradient(closest-side, #000 25%, transparent 75%);
+  animation: ssd-turn 4s linear infinite reverse;
+}
+
+/* -------------------------------------------- */
+/*  More landings                               */
+/* -------------------------------------------- */
+
+.ssd-land-crater,
+.ssd-land-ink,
+.ssd-land-flash,
+.ssd-land-bolt {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-land-crater {
+  left: calc(var(--ssd-size) * -0.85);
+  top: calc(var(--ssd-size) * -0.85);
+  width: calc(var(--ssd-size) * 1.7);
+  height: calc(var(--ssd-size) * 1.7);
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 8deg, transparent 0 11deg, rgb(25 14 8 / 0.85) 11deg 12.5deg, transparent 12.5deg 41deg),
+    radial-gradient(closest-side, rgb(30 18 10 / 0.75) 0 28%, rgb(60 40 25 / 0.35) 45%, transparent 70%);
+  -webkit-mask-image: radial-gradient(closest-side, #000 30%, transparent 75%);
+  mask-image: radial-gradient(closest-side, #000 30%, transparent 75%);
+}
+
+.ssd-land-ink {
+  left: calc(var(--ssd-size) * -0.8);
+  top: calc(var(--ssd-size) * -0.8);
+  width: calc(var(--ssd-size) * 1.6);
+  height: calc(var(--ssd-size) * 1.6);
+  background:
+    radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--ssd-tint-dark, rgb(22 18 40)) 90%, transparent) 0 26%, transparent 27%),
+    radial-gradient(circle at 78% 30%, color-mix(in srgb, var(--ssd-tint-dark, rgb(22 18 40)) 85%, transparent) 0 9%, transparent 10%),
+    radial-gradient(circle at 25% 72%, color-mix(in srgb, var(--ssd-tint-dark, rgb(22 18 40)) 85%, transparent) 0 8%, transparent 9%),
+    radial-gradient(circle at 70% 78%, color-mix(in srgb, var(--ssd-tint-dark, rgb(22 18 40)) 80%, transparent) 0 6%, transparent 7%),
+    radial-gradient(circle at 20% 30%, color-mix(in srgb, var(--ssd-tint-dark, rgb(22 18 40)) 80%, transparent) 0 5%, transparent 6%),
+    radial-gradient(ellipse 34% 18% at 62% 52%, color-mix(in srgb, var(--ssd-tint-dark, rgb(22 18 40)) 85%, transparent) 0 60%, transparent 62%);
+}
+
+.ssd-land-flash {
+  left: calc(var(--ssd-size) * -0.7);
+  top: calc(var(--ssd-size) * -0.7);
+  width: calc(var(--ssd-size) * 1.4);
+  height: calc(var(--ssd-size) * 1.4);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #ffffff 0 15%, var(--ssd-glowc) 40%, transparent 75%);
+}
+
+.ssd-land-bolt {
+  left: calc(var(--ssd-size) * -0.22);
+  top: calc(var(--ssd-size) * -1.1);
+  width: calc(var(--ssd-size) * 0.44);
+  height: calc(var(--ssd-size) * 2.2);
+  transform-origin: 50% 100%;
+  background: linear-gradient(180deg, rgb(255 255 255 / 0.2), #ffffff 40%, var(--ssd-glowc));
+  clip-path: polygon(45% 0, 62% 0, 50% 34%, 70% 34%, 38% 72%, 55% 72%, 30% 100%, 35% 64%, 18% 64%, 42% 30%, 25% 30%);
+}
+
+.ssd-land-fire {
+  left: -4px;
+  top: -4px;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle, var(--ssd-tint-light, #fff6c0) 0 20%, var(--ssd-tint, #ffb340) 45%, var(--ssd-tint-dark, #ff4d1a) 75%, transparent 80%);
+}
+
+.ssd-land-frost {
+  left: -5px;
+  top: -5px;
+  width: 10px;
+  height: 10px;
+  border-radius: 0;
+  background: linear-gradient(135deg, #ffffff, var(--ssd-tint, #bfe9ff));
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+
+.ssd-land-smoke {
+  left: -12px;
+  top: -12px;
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ssd-tint, rgb(200 195 190)) 60%, transparent), transparent);
+}
+
+/* -------------------------------------------- */
+/*  More things inside                          */
+/* -------------------------------------------- */
+
+.ssd-core-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ssd-glowc);
+  font-size: calc(var(--ssd-size) * 0.36);
+}
+
+.ssd-core-heart .ssd-core-in,
+.ssd-core-moon .ssd-core-in,
+.ssd-core-sun .ssd-core-in,
+.ssd-core-snowflake .ssd-core-in,
+.ssd-core-skull .ssd-core-in,
+.ssd-core-bolt .ssd-core-in,
+.ssd-core-ghost .ssd-core-in,
+.ssd-core-symbol .ssd-core-in {
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--ssd-glow-soft), transparent 70%);
+}
+
+.ssd-core-heart .ssd-core-icon { animation: ssd-heart-beat 1.1s ease-in-out infinite; }
+.ssd-core-moon .ssd-core-icon { animation: ssd-sway 3s ease-in-out infinite; }
+.ssd-core-sun .ssd-core-icon { animation: ssd-turn 8s linear infinite; }
+.ssd-core-snowflake .ssd-core-icon { animation: ssd-turn 6s linear infinite; }
+.ssd-core-skull .ssd-core-icon { animation: ssd-bob 2s ease-in-out infinite; }
+.ssd-core-bolt .ssd-core-icon { animation: ssd-zap-core 1.3s steps(1, end) infinite; }
+.ssd-core-ghost .ssd-core-icon { animation: ssd-ghost 2.6s ease-in-out infinite; }
+
+@keyframes ssd-heart-beat {
+  0%, 60%, 100% { transform: scale(1); }
+  15% { transform: scale(1.25); }
+  30% { transform: scale(1.02); }
+  45% { transform: scale(1.18); }
+}
+
+@keyframes ssd-sway {
+  0%, 100% { transform: rotate(-12deg); }
+  50% { transform: rotate(12deg); }
+}
+
+@keyframes ssd-bob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-12%); }
+}
+
+@keyframes ssd-zap-core {
+  0%, 100% { opacity: 1; }
+  40% { opacity: 0.3; }
+  45% { opacity: 1; }
+  70% { opacity: 0.5; }
+  75% { opacity: 1; }
+}
+
+@keyframes ssd-ghost {
+  0%, 100% { transform: translateY(0); opacity: 0.85; }
+  50% { transform: translateY(-14%); opacity: 0.55; }
+}
+
+/* A dragon eye: amber with a slit that narrows and looks around */
+.ssd-core-dragoneye .ssd-core-in {
+  left: calc(var(--ssd-size) * -0.27);
+  top: calc(var(--ssd-size) * -0.17);
+  width: calc(var(--ssd-size) * 0.54);
+  height: calc(var(--ssd-size) * 0.34);
+  border-radius: 50%;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 50% 50%, #ffe08a 0, #e89a1a 55%, #8a3a08 100%);
+  animation: ssd-blink 5s ease-in-out infinite;
+}
+
+.ssd-core-dragoneye .ssd-core-in i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--ssd-size) * 0.08);
+  height: calc(var(--ssd-size) * 0.3);
+  margin: calc(var(--ssd-size) * -0.15) 0 0 calc(var(--ssd-size) * -0.04);
+  border-radius: 50%;
+  background: #120804;
+  animation: ssd-slit 4s ease-in-out infinite;
+}
+
+@keyframes ssd-slit {
+  0%, 20%, 100% { transform: translateX(0) scaleX(1); }
+  35%, 50% { transform: translateX(-120%) scaleX(0.6); }
+  65%, 80% { transform: translateX(120%) scaleX(1.4); }
+}
+
+/* -------------------------------------------- */
+/*  Props of the throw styles                   */
+/* -------------------------------------------- */
+
+.ssd-prop-hand,
+.ssd-prop-cup,
+.ssd-prop-barrel,
+.ssd-prop-flash,
+.ssd-prop-smoke,
+.ssd-prop-impact,
+.ssd-prop-vortex,
+.ssd-prop-portal,
+.ssd-prop-blink,
+.ssd-prop-streak {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* A white glove: the hand belongs to nobody in particular */
+.ssd-prop-hand {
+  width: 0;
+  height: 0;
+}
+
+.ssd-prop-hand i {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.8);
+  top: calc(var(--ssd-size) * -0.8);
+  width: calc(var(--ssd-size) * 1.6);
+  height: calc(var(--ssd-size) * 1.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--ssd-size) * 1.3);
+  color: var(--ssd-tint-light, #f7f3ea);
+  text-shadow: 0 0 1px #2a2420, 0 0 2px #2a2420;
+}
+
+.ssd-prop-cup {
+  left: calc(var(--ssd-size) * -0.65);
+  top: calc(var(--ssd-size) * -0.8);
+  width: calc(var(--ssd-size) * 1.3);
+  height: calc(var(--ssd-size) * 1.6);
+  clip-path: polygon(0 0, 100% 0, 88% 100%, 12% 100%);
+  background:
+    repeating-linear-gradient(90deg, transparent 0 9px, rgb(255 230 190 / 0.25) 9px 10px),
+    linear-gradient(90deg, var(--ssd-tint-dark, #4a2a14), var(--ssd-tint, #8a5a30) 35%, var(--ssd-tint-dark, #6a4020) 65%, var(--ssd-tint-dark, #3a1e0c));
+}
+
+.ssd-prop-cup b {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 18%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, #1a0e06 0 55%, #a8743c 70%, #5a3418);
+}
+
+.ssd-prop-barrel {
+  left: calc(var(--ssd-size) * -0.8);
+  top: calc(var(--ssd-size) * -0.28);
+  width: calc(var(--ssd-size) * 1.6);
+  height: calc(var(--ssd-size) * 0.56);
+  border-radius: 30% 12% 12% 30% / 50%;
+  background: linear-gradient(180deg, #6a6e76, #2a2c30 45%, #15161a 80%, #3a3c42);
+}
+
+.ssd-prop-flash {
+  left: calc(var(--ssd-size) * -0.6);
+  top: calc(var(--ssd-size) * -0.6);
+  width: calc(var(--ssd-size) * 1.2);
+  height: calc(var(--ssd-size) * 1.2);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #ffffff 0 18%, var(--ssd-tint-light, #ffe27a) 40%, color-mix(in srgb, var(--ssd-tint, rgb(255 140 40)) 60%, transparent) 60%, transparent 80%);
+}
+
+.ssd-prop-smoke {
+  left: calc(var(--ssd-size) * -0.5);
+  top: calc(var(--ssd-size) * -0.5);
+  width: var(--ssd-size);
+  height: var(--ssd-size);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(170 165 160 / 0.7), rgb(120 115 110 / 0.3) 55%, transparent 80%);
+}
+
+.ssd-prop-impact {
+  left: calc(var(--ssd-size) * -0.7);
+  top: calc(var(--ssd-size) * -0.7);
+  width: calc(var(--ssd-size) * 1.4);
+  height: calc(var(--ssd-size) * 1.4);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 50%, rgb(170 150 120 / 0.55) 64%, rgb(150 130 100 / 0.25) 76%, transparent 90%);
+}
+
+.ssd-prop-vortex {
+  left: calc(var(--ssd-v) * -0.5);
+  top: calc(var(--ssd-v) * -0.5);
+  width: var(--ssd-v);
+  height: var(--ssd-v);
+  border-radius: 50%;
+  background: repeating-conic-gradient(rgb(255 255 255 / 0) 0 20deg, color-mix(in srgb, var(--ssd-glowc) 45%, transparent) 32deg,
+    rgb(255 255 255 / 0) 50deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 20%, transparent 72%);
+  mask-image: radial-gradient(closest-side, #000 20%, transparent 72%);
+}
+
+.ssd-prop-portal {
+  left: calc(var(--ssd-size) * -0.9);
+  top: calc(var(--ssd-size) * -0.6);
+  width: calc(var(--ssd-size) * 1.8);
+  height: calc(var(--ssd-size) * 1.2);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(10 6 24 / 0.9) 0 55%, var(--ssd-glowc) 70%, #ffffff 75%, var(--ssd-glowc) 80%, transparent 92%);
+}
+
+.ssd-prop-portal b {
+  position: absolute;
+  inset: 12%;
+  border-radius: 50%;
+  background: conic-gradient(var(--ssd-glowc), transparent 25%, var(--ssd-glowc) 50%, transparent 75%, var(--ssd-glowc));
+  -webkit-mask-image: radial-gradient(closest-side, transparent 30%, #000 50%, transparent 75%);
+  mask-image: radial-gradient(closest-side, transparent 30%, #000 50%, transparent 75%);
+  opacity: 0.6;
+  animation: ssd-turn 1.6s linear infinite;
+}
+
+.ssd-prop-blink {
+  left: calc(var(--ssd-size) * -0.7);
+  top: calc(var(--ssd-size) * -0.7);
+  width: calc(var(--ssd-size) * 1.4);
+  height: calc(var(--ssd-size) * 1.4);
+  background: radial-gradient(circle, #ffffff 0 18%, var(--ssd-glowc) 48%);
+  clip-path: polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%);
+}
+
+.ssd-prop-streak {
+  left: calc(var(--ssd-size) * -2.4);
+  top: calc(var(--ssd-size) * -0.2);
+  width: calc(var(--ssd-size) * 2.5);
+  height: calc(var(--ssd-size) * 0.4);
+  border-radius: 50%;
+  transform-origin: 96% 50%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ssd-tint-dark, rgb(255 90 20)) 50%, transparent) 45%, var(--ssd-tint, #ffb340) 80%, var(--ssd-tint-light, #fff6c0));
+}
+
+/* -------------------------------------------- */
+/*  Big moments                                 */
+/* -------------------------------------------- */
+
+.ssd-moment-rocket,
+.ssd-moment-spark,
+.ssd-moment-confetti,
+.ssd-moment-ray,
+.ssd-moment-crown,
+.ssd-moment-crack,
+.ssd-moment-skull,
+.ssd-moment-cloud,
+.ssd-moment-drop,
+.ssd-moment-smoke {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-moment-rocket {
+  left: -3px;
+  top: -6px;
+  width: 6px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(0deg, transparent, hsl(var(--ssd-h) 90% 65%) 50%, #ffffff);
+}
+
+.ssd-moment-spark {
+  left: -3px;
+  top: -3px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 25%, hsl(var(--ssd-h) 95% 62%) 55%, transparent 75%);
+}
+
+.ssd-moment-ray {
+  left: calc(var(--ssd-size) * -0.6);
+  top: calc(var(--ssd-size) * -6);
+  width: calc(var(--ssd-size) * 1.2);
+  height: calc(var(--ssd-size) * 6);
+  transform-origin: 50% 100%;
+  border-radius: 50% 50% 40% 40% / 10% 10% 6% 6%;
+  background: linear-gradient(to top, rgb(255 244 200 / 0.9), rgb(255 222 130 / 0.4) 40%, transparent);
+}
+
+.ssd-moment-crown b,
+.ssd-moment-skull b,
+.ssd-moment-cloud b {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.6);
+  top: calc(var(--ssd-size) * -0.6);
+  width: calc(var(--ssd-size) * 1.2);
+  height: calc(var(--ssd-size) * 1.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--ssd-size) * 0.8);
+}
+
+.ssd-moment-crown b {
+  color: #ffd84a;
+  text-shadow: 0 0 2px #7a5200, 0 1px 0 #fff3b0;
+}
+
+.ssd-moment-skull b {
+  color: #d8f5d0;
+  text-shadow: 0 0 2px #1a2a18;
+}
+
+.ssd-moment-cloud b {
+  font-size: calc(var(--ssd-size) * 1);
+  color: #8a929c;
+  text-shadow: 0 0 2px #3a4048;
+}
+
+.ssd-moment-crack {
+  left: calc(var(--ssd-size) * -0.9);
+  top: calc(var(--ssd-size) * -0.9);
+  width: calc(var(--ssd-size) * 1.8);
+  height: calc(var(--ssd-size) * 1.8);
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 10deg, transparent 0 9deg, rgb(20 10 5 / 0.85) 9deg 10.5deg, transparent 10.5deg 37deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 22%, transparent 74%);
+  mask-image: radial-gradient(closest-side, #000 22%, transparent 74%);
+}
+
+.ssd-moment-drop {
+  left: -1px;
+  top: -6px;
+  width: 2px;
+  height: 12px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, transparent, #9cd4ff);
+}
+
+.ssd-moment-smoke {
+  left: calc(var(--ssd-size) * -0.4);
+  top: calc(var(--ssd-size) * -0.4);
+  width: calc(var(--ssd-size) * 0.8);
+  height: calc(var(--ssd-size) * 0.8);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgb(25 22 22 / 0.85), rgb(40 36 36 / 0.4) 55%, transparent 80%);
+}
+
+/* The edges of the screen, gold on the highest result, red on a 1 */
+.ssd-vignette {
+  position: fixed;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-vignette-max {
+  background: radial-gradient(ellipse at center, transparent 55%, rgb(255 205 70 / 0.5) 100%);
+}
+
+.ssd-vignette-min {
+  background: radial-gradient(ellipse at center, transparent 55%, rgb(200 30 30 / 0.5) 100%);
+}
+
+/* -------------------------------------------- */
+/*  Effects of the classes                      */
+/* -------------------------------------------- */
+
+/* Particles drawn as an icon or a letter */
+.ssd-particle b {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-style: normal;
+}
+
+.ssd-p-feathers,
+.ssd-p-bats,
+.ssd-p-gears,
+.ssd-land-bones {
+  left: -7px;
+  top: -7px;
+  width: 14px;
+  height: 14px;
+  border-radius: 0;
+  font-size: 12px;
+}
+
+.ssd-p-feathers b {
+  color: var(--ssd-tint, #f1ebdf);
+  text-shadow: 0 0 1px rgb(60 40 20 / 0.8);
+}
+
+.ssd-p-bats b {
+  color: var(--ssd-tint, #1e1626);
+  text-shadow: 0 0 2px var(--ssd-glowc);
+  animation: ssd-flap 0.18s ease-in-out infinite alternate;
+}
+
+.ssd-p-gears b {
+  color: var(--ssd-tint, #c9a227);
+  text-shadow: 0 0 1px #3a2a10;
+  animation: ssd-turn 0.9s linear infinite;
+}
+
+.ssd-land-bones b {
+  color: var(--ssd-tint-light, #efe6d2);
+  text-shadow: 0 0 1px #3a3026;
+}
+
+/* A drop of blood */
+.ssd-p-blood {
+  left: -3px;
+  top: -5px;
+  width: 6px;
+  height: 9px;
+  border-radius: 50% 50% 50% 50% / 62% 62% 40% 40%;
+  background: radial-gradient(circle at 40% 65%, var(--ssd-tint-light, #ff6a5a) 0 12%, var(--ssd-tint, #b0141a) 45%, var(--ssd-tint-dark, #5a0408));
+}
+
+/* Runes and notes are letters in the color of the light */
+.ssd-p-runes,
+.ssd-land-notes {
+  left: -8px;
+  top: -9px;
+  width: 16px;
+  height: 18px;
+  border-radius: 0;
+  color: var(--ssd-glowc);
+  font: 700 14px/18px "Segoe UI Historic", "Noto Sans Runic", serif;
+  text-align: center;
+  text-shadow: 0 0 3px var(--ssd-glowc), 0 0 1px #000000;
+}
+
+.ssd-land-notes {
+  font: 16px/18px "Signika", sans-serif;
+}
+
+/* A gust: a curved white line */
+.ssd-p-wind {
+  left: -12px;
+  top: -6px;
+  width: 24px;
+  height: 12px;
+  border-radius: 50%;
+  border-top: 2px solid color-mix(in srgb, var(--ssd-tint, #ffffff) 85%, transparent);
+  background: none;
+}
+
+/* Rage: the light under the die throbs red, red heat rises */
+.ssd-fx-rage.ssd-fxt i {
+  left: calc(var(--ssd-size) * -1);
+  top: calc(var(--ssd-size) * -1);
+  width: calc(var(--ssd-size) * 2);
+  height: calc(var(--ssd-size) * 2);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--ssd-glowc), color-mix(in srgb, var(--ssd-tint-dark, #8a0a00) 50%, transparent) 50%, transparent 74%);
+  animation: ssd-pool-pulse 0.55s ease-in-out infinite;
+}
+
+.ssd-fx-rage.ssd-fxa i {
+  left: calc(var(--ssd-size) * -0.2);
+  top: calc(var(--ssd-size) * -0.2);
+  width: calc(var(--ssd-size) * 0.4);
+  height: calc(var(--ssd-size) * 0.4);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ssd-glowc) 85%, #ffffff), color-mix(in srgb, var(--ssd-tint-dark, #a01000) 55%, transparent) 55%, transparent 78%);
+  opacity: 0;
+}
+
+/* Vines: a ring of leaves under the die, leaves drifting around it */
+.ssd-fx-vines.ssd-fxt i {
+  left: calc(var(--ssd-size) * -0.95);
+  top: calc(var(--ssd-size) * -0.95);
+  width: calc(var(--ssd-size) * 1.9);
+  height: calc(var(--ssd-size) * 1.9);
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, transparent 66%, var(--ssd-tint-dark, #2f5a1c) 69%, transparent 72%),
+    repeating-conic-gradient(transparent 0 14deg, var(--ssd-tint, #5f9a34) 14deg 26deg, transparent 26deg 30deg, var(--ssd-tint-light, #9fd45a) 30deg 38deg, transparent 38deg 45deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 60%, #000 63%, #000 78%, transparent 80%);
+  mask-image: radial-gradient(closest-side, transparent 60%, #000 63%, #000 78%, transparent 80%);
+  animation: ssd-turn 16s linear infinite;
+}
+
+.ssd-fx-vines.ssd-fxa i {
+  left: calc(var(--ssd-size) * -0.1);
+  top: calc(var(--ssd-size) * -0.07);
+  width: calc(var(--ssd-size) * 0.2);
+  height: calc(var(--ssd-size) * 0.14);
+}
+
+.ssd-fx-vines b {
+  position: absolute;
+  inset: 0;
+  border-radius: 0 80% 0 80%;
+  background: linear-gradient(135deg, var(--ssd-tint-light, #b6e07a), var(--ssd-tint, #4f8a2c));
+  animation: ssd-sway 1.4s ease-in-out infinite;
+}
+
+/* Chi: arcs of air circling the die */
+.ssd-fx-chi i {
+  left: calc(var(--ssd-size) * -0.26);
+  top: calc(var(--ssd-size) * -0.1);
+  width: calc(var(--ssd-size) * 0.52);
+  height: calc(var(--ssd-size) * 0.2);
+  border-radius: 50%;
+  border-top: 2px solid var(--ssd-glowc);
+  opacity: 0.85;
+}
+
+/* Gears turning on the table behind the die */
+.ssd-fx-gears i {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ssd-tint, #a8823a);
+  opacity: 0.6;
+}
+
+.ssd-fx-gears i:nth-child(1) {
+  left: calc(var(--ssd-size) * -1.05);
+  top: calc(var(--ssd-size) * -0.75);
+  width: calc(var(--ssd-size) * 1.1);
+  height: calc(var(--ssd-size) * 1.1);
+  font-size: calc(var(--ssd-size) * 1);
+}
+
+.ssd-fx-gears i:nth-child(2) {
+  left: calc(var(--ssd-size) * -0.1);
+  top: calc(var(--ssd-size) * -0.95);
+  width: calc(var(--ssd-size) * 0.75);
+  height: calc(var(--ssd-size) * 0.75);
+  font-size: calc(var(--ssd-size) * 0.68);
+}
+
+.ssd-fx-gears b {
+  text-shadow: 0 0 2px var(--ssd-glowc);
+  animation: ssd-turn 6s linear infinite;
+}
+
+.ssd-fx-gears i:nth-child(2) b {
+  animation: ssd-turn 4.1s linear infinite reverse;
+}
+
+/* Tentacles rise around the foot of the die and sway */
+.ssd-fx-tentacles i {
+  left: calc(var(--ssd-size) * -0.08);
+  top: calc(var(--ssd-size) * -0.72);
+  width: calc(var(--ssd-size) * 0.16);
+  height: calc(var(--ssd-size) * 0.72);
+}
+
+.ssd-fx-tentacles b {
+  position: absolute;
+  inset: 0;
+  border-radius: 50% 50% 40% 40% / 90% 90% 10% 10%;
+  background: linear-gradient(to top, var(--ssd-tint-dark, #140a20), var(--ssd-tint, #3e1c5a) 55%, var(--ssd-glowc) 92%, transparent);
+  transform-origin: 50% 100%;
+  animation: ssd-tentacle 2.6s ease-in-out infinite alternate;
+}
+
+.ssd-fx-tentacles i:nth-child(2n) b { animation-duration: 2.1s; animation-direction: alternate-reverse; }
+.ssd-fx-tentacles i:nth-child(3n) b { animation-duration: 3s; }
+
+@keyframes ssd-tentacle {
+  0% { transform: rotate(-16deg) scaleY(0.85); }
+  50% { transform: rotate(6deg) scaleY(1); }
+  100% { transform: rotate(18deg) scaleY(0.92); }
+}
+
+/* A hunter's mark on the table: rings and four ticks, turning */
+.ssd-fx-mark i {
+  left: calc(var(--ssd-size) * -0.85);
+  top: calc(var(--ssd-size) * -0.85);
+  width: calc(var(--ssd-size) * 1.7);
+  height: calc(var(--ssd-size) * 1.7);
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, transparent 86%, var(--ssd-tint, #e04a3a) 88%, transparent 92%),
+    radial-gradient(closest-side, transparent 52%, var(--ssd-tint, #e04a3a) 54%, transparent 57%),
+    conic-gradient(from -4deg, var(--ssd-tint, #e04a3a) 0 8deg, transparent 8deg 90deg, var(--ssd-tint, #e04a3a) 90deg 98deg,
+      transparent 98deg 180deg, var(--ssd-tint, #e04a3a) 180deg 188deg, transparent 188deg 270deg, var(--ssd-tint, #e04a3a) 270deg 278deg, transparent 278deg);
+  -webkit-mask-image: radial-gradient(closest-side, transparent 50%, #000 52%);
+  mask-image: radial-gradient(closest-side, transparent 50%, #000 52%);
+  opacity: 0.8;
+  animation: ssd-turn 8s linear infinite;
+}
+
+/* Wings on both sides of the die, beating: a feathered outline with a scalloped lower edge */
+.ssd-fx-wings i {
+  top: calc(var(--ssd-size) * -0.85);
+  width: calc(var(--ssd-size) * 1.05);
+  height: calc(var(--ssd-size) * 0.85);
+}
+
+.ssd-fx-wings i.ssd-left {
+  left: calc(var(--ssd-size) * -1.25);
+  transform: translateZ(calc(var(--ssd-size) * -0.3));
+}
+
+.ssd-fx-wings i.ssd-right {
+  left: calc(var(--ssd-size) * 0.2);
+  transform: translateZ(calc(var(--ssd-size) * -0.3)) scaleX(-1);
+}
+
+.ssd-fx-wings b {
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(100% 78%, 96% 48%, 84% 24%, 64% 8%, 38% 0, 14% 4%, 0 14%, 14% 22%, 2% 32%, 18% 40%, 6% 50%,
+    24% 56%, 14% 66%, 34% 70%, 28% 80%, 50% 82%, 48% 92%, 68% 88%, 74% 100%, 86% 90%);
+  background:
+    repeating-linear-gradient(118deg, transparent 0 7px, color-mix(in srgb, var(--ssd-glowc) 50%, transparent) 7px 8px),
+    linear-gradient(200deg, #ffffff, color-mix(in srgb, var(--ssd-tint, #fff4dc) 92%, transparent) 50%, color-mix(in srgb, var(--ssd-glowc) 70%, transparent));
+  transform-origin: 100% 78%;
+  animation: ssd-beat 1.2s ease-in-out infinite;
+}
+
+@keyframes ssd-beat {
+  0%, 100% { transform: rotate(8deg) scaleX(1); }
+  50% { transform: rotate(-14deg) scaleX(0.55); }
+}
+
+/* Notes circling the die */
+.ssd-fx-melody i {
+  left: calc(var(--ssd-size) * -0.12);
+  top: calc(var(--ssd-size) * -0.16);
+  width: calc(var(--ssd-size) * 0.24);
+  height: calc(var(--ssd-size) * 0.32);
+  color: var(--ssd-glowc);
+  font: calc(var(--ssd-size) * 0.28) / calc(var(--ssd-size) * 0.32) "Signika", sans-serif;
+  text-align: center;
+  text-shadow: 0 0 3px var(--ssd-glowc), 0 0 1px #000000;
+}
+
+.ssd-fx-melody i::before { content: "\266A"; }
+.ssd-fx-melody i:nth-child(2n)::before { content: "\266B"; }
+
+/* A shield of light around the die */
+.ssd-fx-shield i {
+  left: calc(var(--ssd-size) * -0.78);
+  top: calc(var(--ssd-size) * -0.85);
+  width: calc(var(--ssd-size) * 1.56);
+  height: calc(var(--ssd-size) * 1.7);
+  clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  background:
+    repeating-linear-gradient(60deg, transparent 0 9px, color-mix(in srgb, var(--ssd-glowc) 18%, transparent) 9px 10px),
+    radial-gradient(closest-side, transparent 55%, var(--ssd-glow-soft) 82%, color-mix(in srgb, var(--ssd-glowc) 80%, transparent) 100%);
+  transform: translateZ(calc(var(--ssd-size) * 0.35));
+  opacity: 0.8;
+  animation: ssd-shimmer-shield 2.4s ease-in-out infinite;
+}
+
+@keyframes ssd-shimmer-shield {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.85; }
+}
+
+/* Holy light: a circle of rays under the landed die */
+.ssd-land-consecrate,
+.ssd-land-clash,
+.ssd-land-arrow,
+.ssd-land-quake {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-land-consecrate {
+  left: calc(var(--ssd-size) * -1.15);
+  top: calc(var(--ssd-size) * -1.15);
+  width: calc(var(--ssd-size) * 2.3);
+  height: calc(var(--ssd-size) * 2.3);
+  border-radius: 50%;
+  background:
+    radial-gradient(closest-side, transparent 84%, var(--ssd-glowc) 87%, transparent 91%),
+    radial-gradient(closest-side, color-mix(in srgb, var(--ssd-glowc) 55%, transparent) 0 20%, transparent 50%),
+    repeating-conic-gradient(color-mix(in srgb, var(--ssd-glowc) 60%, transparent) 0 4deg, transparent 4deg 30deg);
+  -webkit-mask-image: radial-gradient(closest-side, #000 60%, transparent 92%);
+  mask-image: radial-gradient(closest-side, #000 60%, transparent 92%);
+}
+
+.ssd-land-consecrate b {
+  position: absolute;
+  inset: 30%;
+  background: linear-gradient(90deg, transparent 42%, #ffffff 46% 54%, transparent 58%),
+    linear-gradient(0deg, transparent 42%, #ffffff 46% 54%, transparent 58%);
+  -webkit-mask-image: radial-gradient(closest-side, #000 40%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 40%, transparent 100%);
+  opacity: 0.7;
+}
+
+.ssd-land-clash b,
+.ssd-land-arrow b {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ssd-land-clash b {
+  left: calc(var(--ssd-size) * -0.4);
+  top: calc(var(--ssd-size) * -0.4);
+  width: calc(var(--ssd-size) * 0.8);
+  height: calc(var(--ssd-size) * 0.8);
+  font-size: calc(var(--ssd-size) * 0.6);
+  color: var(--ssd-tint-light, #eef1f6);
+  text-shadow: 0 0 2px #1a1d22, 0 0 6px var(--ssd-glowc);
+}
+
+.ssd-land-clash-spark {
+  left: -2.5px;
+  top: -2.5px;
+  width: 5px;
+  height: 5px;
+  background: radial-gradient(circle, #ffffff 0 30%, #ffd66b 60%, transparent 75%);
+}
+
+.ssd-land-arrow b {
+  left: calc(var(--ssd-size) * -0.2);
+  top: calc(var(--ssd-size) * -0.4);
+  width: calc(var(--ssd-size) * 0.4);
+  height: calc(var(--ssd-size) * 0.5);
+  font-size: calc(var(--ssd-size) * 0.42);
+  color: var(--ssd-tint, #7a5a32);
+  text-shadow: 0 0 1px #1a120a, 0 0 1px #1a120a;
+}
+
+.ssd-land-quake {
+  left: calc(var(--ssd-size) * -1.1);
+  top: calc(var(--ssd-size) * -1.1);
+  width: calc(var(--ssd-size) * 2.2);
+  height: calc(var(--ssd-size) * 2.2);
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 5deg, transparent 0 13deg, color-mix(in srgb, var(--ssd-tint-dark, rgb(25 12 6)) 90%, transparent) 13deg 14.5deg, transparent 14.5deg 33deg),
+    radial-gradient(closest-side, color-mix(in srgb, var(--ssd-glowc) 50%, transparent), transparent 40%);
+  -webkit-mask-image: radial-gradient(closest-side, #000 25%, transparent 80%);
+  mask-image: radial-gradient(closest-side, #000 25%, transparent 80%);
+}
+
+.ssd-land-steam {
+  left: -12px;
+  top: -12px;
+  width: 24px;
+  height: 24px;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--ssd-tint, #ffffff) 70%, transparent), transparent);
+}
+
+/* More things inside: symbols */
+.ssd-core-leaf .ssd-core-icon,
+.ssd-core-feather .ssd-core-icon,
+.ssd-core-mask .ssd-core-icon,
+.ssd-core-flask .ssd-core-icon,
+.ssd-core-axe .ssd-core-icon,
+.ssd-core-sword .ssd-core-icon,
+.ssd-core-bow .ssd-core-icon { animation: ssd-sway 3s ease-in-out infinite; }
+
+.ssd-core-note .ssd-core-icon,
+.ssd-core-paw .ssd-core-icon,
+.ssd-core-book .ssd-core-icon,
+.ssd-core-hat .ssd-core-icon,
+.ssd-core-crow .ssd-core-icon,
+.ssd-core-spider .ssd-core-icon,
+.ssd-core-dove .ssd-core-icon { animation: ssd-bob 2s ease-in-out infinite; }
+
+.ssd-core-gear .ssd-core-icon { animation: ssd-turn 4s linear infinite; }
+.ssd-core-yinyang .ssd-core-icon { animation: ssd-turn 6s linear infinite; }
+.ssd-core-fist .ssd-core-icon { animation: ssd-heart-beat 1.4s ease-in-out infinite; }
+
+.ssd-core-shield .ssd-core-icon,
+.ssd-core-ankh .ssd-core-icon,
+.ssd-core-brain .ssd-core-icon { animation: ssd-breathe 2.2s ease-in-out infinite; }
+
+/* Props of the new throws: the bow, the streaks of its shots, the wind and the beam of light */
+.ssd-prop-bow,
+.ssd-prop-whoosh,
+.ssd-prop-wind,
+.ssd-prop-beam {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: none;
+  opacity: 0;
+}
+
+.ssd-prop-bow {
+  width: 0;
+  height: 0;
+}
+
+.ssd-prop-bow b {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.7);
+  top: calc(var(--ssd-size) * -0.7);
+  width: calc(var(--ssd-size) * 1.4);
+  height: calc(var(--ssd-size) * 1.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--ssd-size) * 1.15);
+  color: var(--ssd-tint-light, #e8d4ac);
+  text-shadow: 0 0 1px #2a1a0a, 0 0 2px #2a1a0a;
+}
+
+.ssd-prop-whoosh {
+  left: calc(var(--ssd-size) * -1.6);
+  top: calc(var(--ssd-size) * -0.05);
+  width: calc(var(--ssd-size) * 1.65);
+  height: calc(var(--ssd-size) * 0.1);
+  border-radius: 50%;
+  transform-origin: 97% 50%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ssd-glowc) 60%, transparent) 60%, #ffffff);
+}
+
+.ssd-prop-wind {
+  left: calc(var(--ssd-size) * -1);
+  top: calc(var(--ssd-size) * -0.05);
+  width: calc(var(--ssd-size) * 2);
+  height: calc(var(--ssd-size) * 0.1);
+  border-radius: 50%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--ssd-tint, #ffffff) 75%, transparent) 50%, transparent);
+}
+
+.ssd-prop-beam {
+  left: calc(var(--ssd-size) * -0.55);
+  top: calc(var(--ssd-size) * -5);
+  width: calc(var(--ssd-size) * 1.1);
+  height: calc(var(--ssd-size) * 5);
+  transform-origin: 50% 100%;
+  border-radius: 50% 50% 40% 40% / 8% 8% 6% 6%;
+  background: linear-gradient(to top, color-mix(in srgb, var(--ssd-glowc) 75%, #ffffff), color-mix(in srgb, var(--ssd-glowc) 30%, transparent) 45%, transparent);
+}
+
+/* New big moments */
+.ssd-moment-rose,
+.ssd-moment-note,
+.ssd-moment-bloom,
+.ssd-moment-flower,
+.ssd-moment-hammer,
+.ssd-moment-wave,
+.ssd-moment-roar,
+.ssd-moment-leaf,
+.ssd-moment-fizzle {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.ssd-moment-rose {
+  left: -6px;
+  top: -4px;
+  width: 12px;
+  height: 8px;
+  border-radius: 80% 0 80% 0;
+  background: linear-gradient(135deg, #ffb3c1, #d4204a 70%, #7a0a22);
+}
+
+.ssd-moment-note {
+  left: -8px;
+  top: -10px;
+  width: 16px;
+  height: 20px;
+  color: #ffd66b;
+  font: 18px/20px "Signika", sans-serif;
+  text-align: center;
+  text-shadow: 0 0 3px #ffb340, 0 0 1px #000000;
+}
+
+.ssd-moment-bloom {
+  left: calc(var(--ssd-size) * -1);
+  top: calc(var(--ssd-size) * -1);
+  width: calc(var(--ssd-size) * 2);
+  height: calc(var(--ssd-size) * 2);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 60%, rgb(140 210 90 / 0.55) 72%, rgb(255 170 210 / 0.5) 80%, transparent 92%);
+}
+
+.ssd-moment-flower {
+  left: -8px;
+  top: -8px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #ffe680 0 22%, transparent 25%),
+    repeating-conic-gradient(hsl(var(--ssd-h, 330) 85% 78%) 0 30deg, hsl(var(--ssd-h, 330) 70% 62%) 30deg 72deg);
+  -webkit-mask-image: radial-gradient(circle, #000 60%, transparent 72%);
+  mask-image: radial-gradient(circle, #000 60%, transparent 72%);
+}
+
+.ssd-moment-hammer b {
+  position: absolute;
+  left: calc(var(--ssd-size) * -0.6);
+  top: calc(var(--ssd-size) * -0.6);
+  width: calc(var(--ssd-size) * 1.2);
+  height: calc(var(--ssd-size) * 1.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(var(--ssd-size) * 0.9);
+  color: #fff6d0;
+  text-shadow: 0 0 3px #ffd66b, 0 0 8px #ffb340, 0 0 1px #6a4a00;
+}
+
+.ssd-moment-wave,
+.ssd-moment-roar {
+  left: calc(var(--ssd-size) * -0.6);
+  top: calc(var(--ssd-size) * -0.6);
+  width: calc(var(--ssd-size) * 1.2);
+  height: calc(var(--ssd-size) * 1.2);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, transparent 58%, rgb(255 222 120 / 0.5) 70%, #fff4c8 78%, rgb(255 200 60 / 0.4) 86%, transparent 96%);
+}
+
+.ssd-moment-roar {
+  background: radial-gradient(closest-side, transparent 58%, rgb(220 50 20 / 0.5) 70%, #ff8a5a 78%, rgb(160 20 0 / 0.45) 86%, transparent 96%);
+}
+
+.ssd-moment-leaf {
+  left: -6px;
+  top: -4px;
+  width: 12px;
+  height: 8px;
+  border-radius: 0 80% 0 80%;
+  background: linear-gradient(135deg, #c99a4a, #7a5220 70%, #4a3010);
+}
+
+.ssd-moment-fizzle {
+  left: -2.5px;
+  top: -2.5px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0 25%, var(--ssd-glowc) 55%, transparent 75%);
+}
+
+/* -------------------------------------------- */
+/*  Calm screens                                */
+/* -------------------------------------------- */
+
+.ssd-calm .ssd-core-icon,
+.ssd-calm .ssd-core-in i {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ssd-core-icon,
+  .ssd-fx-butterflies b,
+  .ssd-fx-halo i,
+  .ssd-fx-rings i,
+  .ssd-fx-runecircle i,
+  .ssd-fx-vortex i,
+  .ssd-prop-portal b,
+  .ssd-fx-rage i,
+  .ssd-fx-vines i,
+  .ssd-fx-vines b,
+  .ssd-fx-gears b,
+  .ssd-fx-tentacles b,
+  .ssd-fx-mark i,
+  .ssd-fx-wings b,
+  .ssd-fx-shield i,
+  .ssd-p-bats b,
+  .ssd-p-gears b {
+    animation-duration: 0s;
+  }
+}

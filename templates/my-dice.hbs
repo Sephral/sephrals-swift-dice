@@ -1,0 +1,154 @@
+<form class="ssd-shell" autocomplete="off">
+  <div class="ssd-columns">
+    <div class="ssd-column">
+      <div class="ssd-preview" aria-hidden="true"></div>
+      <p class="ssd-hint ssd-center">{{text.everyone}}</p>
+
+      <fieldset class="ssd-card">
+        <legend>{{text.presetsLabel}}</legend>
+        {{#if allowOwn}}
+        <div class="ssd-presets" role="group" aria-label="{{text.presetsLabel}}">
+          {{#each presets}}
+          <button type="button" class="ssd-preset {{#if active}}ssd-active{{/if}}" data-action="preset" data-preset="{{key}}"
+            data-tooltip="{{label}}" aria-label="{{label}}" aria-pressed="{{#if active}}true{{else}}false{{/if}}"
+            style="--ssd-a: {{color}}; --ssd-b: {{second}}"></button>
+          {{/each}}
+        </div>
+        {{/if}}
+        <div class="ssd-buttons">
+          <button type="button" class="ssd-random" data-action="randomize"><i class="fa-solid fa-wand-magic-sparkles" inert></i> {{text.random}}</button>
+          <button type="button" class="ssd-reset" data-action="resetLook" data-tooltip="{{text.resetHint}}"><i class="fa-solid fa-rotate-left" inert></i> {{text.reset}}</button>
+        </div>
+      </fieldset>
+
+      <fieldset class="ssd-card">
+        <legend>{{text.classesLabel}}</legend>
+        <div class="ssd-classes" role="group" aria-label="{{text.classesLabel}}">
+          {{#each classes}}
+          <button type="button" class="ssd-class {{#if active}}ssd-active{{/if}}" data-action="classLook" data-key="{{key}}"
+            data-tooltip="{{label}}" aria-label="{{label}}" aria-pressed="{{#if active}}true{{else}}false{{/if}}"
+            style="--ssd-a: {{color}}; --ssd-b: {{second}}; --ssd-c: {{glowColor}}"><i class="fa-solid {{icon}}" inert></i></button>
+          {{/each}}
+        </div>
+        <label class="ssd-row">
+          <input type="checkbox" name="byClass" {{#if byClass}}checked{{/if}}>
+          <span>{{text.byClass}}</span>
+        </label>
+        <p class="ssd-hint ssd-indent ssd-class-status">{{classStatus}}</p>
+      </fieldset>
+
+      <fieldset class="ssd-card">
+        <legend>{{text.color}}</legend>
+        <label class="ssd-row">
+          <input type="radio" name="mode" value="player" {{#unless own}}checked{{/unless}}>
+          <span class="ssd-swatch" style="--ssd-swatch: {{playerColor}}"></span>
+          <span>{{text.player}}</span>
+        </label>
+        <label class="ssd-row {{#unless allowOwn}}ssd-off{{/unless}}">
+          <input type="radio" name="mode" value="own" {{#if own}}checked{{/if}} {{#unless allowOwn}}disabled{{/unless}}>
+          <input type="color" name="color" value="{{ownColor}}" {{#unless allowOwn}}disabled{{/unless}} aria-label="{{text.own}}">
+          <span>{{text.own}}</span>
+        </label>
+        {{#unless allowOwn}}<p class="ssd-hint ssd-indent">{{text.locked}}</p>{{/unless}}
+        {{#if allowOwn}}
+        <label class="ssd-row">
+          <input type="checkbox" name="d20On" {{#if d20On}}checked{{/if}}>
+          <input type="color" name="d20" value="{{d20Color}}" aria-label="{{text.d20}}">
+          <span>{{text.d20}}</span>
+        </label>
+        {{/if}}
+      </fieldset>
+    </div>
+
+    <div class="ssd-column ssd-fields">
+      <fieldset class="ssd-card ssd-grid">
+        <legend>{{text.style}}</legend>
+        <span class="ssd-key">{{text.pattern}}</span>
+        <div class="ssd-pair">
+          <select name="pattern">
+            {{#each patterns}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          {{> ssdColorPick field=second label=text.second back=text.colorBack}}
+        </div>
+        <span class="ssd-key">{{text.finish}}</span>
+        <select name="finish">
+          {{#each finishes}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+        </select>
+        <span class="ssd-key">{{text.core}}</span>
+        <div class="ssd-pair">
+          <select name="core" data-tooltip="{{text.coreHint}}">
+            {{#each cores}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          {{> ssdColorPick field=coreColor label=text.core back=text.colorBack}}
+        </div>
+        {{#if coreHidden}}<p class="ssd-hint ssd-wide">{{text.coreHint}}</p>{{/if}}
+        <span class="ssd-key">{{text.numbers}}</span>
+        <div class="ssd-pair">
+          <select name="textMode" {{#unless allowOwn}}disabled{{/unless}}>
+            <option value="auto" {{#unless textOwn}}selected{{/unless}}>{{text.textAuto}}</option>
+            <option value="own" {{#if textOwn}}selected{{/if}}>{{text.textOwn}}</option>
+          </select>
+          <input type="color" name="text" value="{{textColor}}" aria-label="{{text.textOwn}}" {{#unless allowOwn}}disabled{{/unless}}>
+        </div>
+        <span class="ssd-key">{{text.font}}</span>
+        <select name="font">
+          {{#each fonts}}<option value="{{key}}" {{#if selected}}selected{{/if}} style="font-family: {{family}}">{{label}}</option>{{/each}}
+        </select>
+      </fieldset>
+
+      <fieldset class="ssd-card ssd-grid">
+        <legend>{{text.throwing}}</legend>
+        <span class="ssd-key">{{text.throw}}</span>
+        <div class="ssd-pair">
+          <select name="throw">
+            {{#each throws}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          {{> ssdColorPick field=throwColor label=text.throw back=text.colorBack}}
+        </div>
+        <span class="ssd-key">{{text.triumph}}</span>
+        <select name="triumph">
+          {{#each triumphs}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+        </select>
+        <span class="ssd-key">{{text.fumble}}</span>
+        <select name="fumble">
+          {{#each fumbles}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+        </select>
+      </fieldset>
+
+      <fieldset class="ssd-card ssd-grid">
+        <legend>{{text.effects}}</legend>
+        <span class="ssd-key">{{text.glow}}</span>
+        <div class="ssd-pair">
+          <select name="glow">
+            {{#each glows}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          {{> ssdColorPick field=glowColor label=text.glowColor back=text.colorBack}}
+        </div>
+        <span class="ssd-key">{{text.trail}}</span>
+        <div class="ssd-pair">
+          <select name="trail">
+            {{#each trails}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          {{> ssdColorPick field=trailColor label=text.trail back=text.colorBack}}
+        </div>
+        <span class="ssd-key">{{text.aura}}</span>
+        <div class="ssd-pair">
+          <select name="aura">
+            {{#each auras}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          {{> ssdColorPick field=auraColor label=text.aura back=text.colorBack}}
+        </div>
+        <span class="ssd-key">{{text.landing}}</span>
+        <div class="ssd-pair">
+          <select name="landing">
+            {{#each landings}}<option value="{{key}}" {{#if selected}}selected{{/if}}>{{label}}</option>{{/each}}
+          </select>
+          {{> ssdColorPick field=landingColor label=text.landing back=text.colorBack}}
+        </div>
+        {{#if effectsOff}}<p class="ssd-hint ssd-wide">{{text.effectsOff}}</p>{{/if}}
+      </fieldset>
+    </div>
+  </div>
+
+  <button type="button" class="ssd-test" data-action="testThrow"><i class="fa-solid fa-dice" inert></i> {{text.test}}</button>
+</form>
