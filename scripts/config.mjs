@@ -9,7 +9,7 @@ export const MODULE_ID = "sephrals-swift-dice";
 export const TEMPLATES = `modules/${MODULE_ID}/templates`;
 
 /** The Foundry versions the module was verified against (see the self-test). */
-export const TESTED_VERSIONS = {core: "14.369"};
+export const TESTED_VERSIONS = {core: "14.370"};
 
 /** The icon of the module. */
 export const ICON = "fa-solid fa-dice-d20";
