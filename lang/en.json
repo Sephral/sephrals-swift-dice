@@ -54,6 +54,10 @@
         "normal": "Normal (1.4 seconds)",
         "slow": "Slow (1.9 seconds)"
       },
+      "sequential": {
+        "name": "One throw after the other",
+        "hint": "A roll that comes while dice are still rolling waits until they lie still, and its card waits with it. So attack and damage do not land at the same moment. A throw never waits longer than 4 seconds. Off: every throw starts at once."
+      },
       "colors": {
         "name": "Dice colors",
         "hint": "Every user's dice take the color they picked in Foundry. With the first choice players may pick their own colors in My dice. Surface, pattern and font are always theirs to pick.",

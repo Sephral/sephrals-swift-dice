@@ -806,7 +806,7 @@
 .chat-message.ssd-waiting .message-content,
 .chat-message.ssd-waiting .flavor-text {
   visibility: hidden;
-  animation: ssd-show 0s linear 4s forwards;
+  animation: ssd-show 0s linear var(--ssd-fallback, 4s) forwards;
 }
 
 .chat-message.ssd-waiting .message-content {

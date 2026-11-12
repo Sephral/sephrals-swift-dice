@@ -5,7 +5,8 @@ Swift Dice throws 3D dice for every roll in the chat. The dice are drawn by the 
 ## A throw
 
 * **When:** a chat message with rolls arrives. Every screen starts the throw the moment the message arrives, so all players see the dice land together. The way the dice tumble is the same on every screen.
-* **The card:** with *Results in the chat* on *When the dice have landed* (the default), the card appears at once and its result stays covered while the dice roll. The wait is never longer than the throw itself, and after four seconds the result shows in any case. With *At once* the card shows its result right away and the dice roll along.
+* **The card:** with *Results in the chat* on *When the dice have landed* (the default), the card appears at once and its result stays covered while the dice roll. The wait is never longer than the throw itself (plus the throws before it, see below), and shortly after that the result shows in any case. With *At once* the card shows its result right away and the dice roll along.
+* **One throw after the other:** a roll that comes while dice are still rolling waits until they lie still, and its card waits with it. Attack and damage, or an attack and the automatic damage of a system or module, land one after the other, so nobody reads the hit from the number of damage dice. A throw waits at most 4 seconds, after that the next ones start at once. Every screen gets the rolls in the same order, so all see the same sequence. The GM turns it off with *One throw after the other*.
 * **Rolls added later:** cards that get their rolls after they appear (Midi QOL attacks and damage, for example) throw the new dice when they arrive. Their card does not wait.
 * **Where:** beside the chat, left of the sidebar or of the column with new chat messages, and above the macro bar, so the dice cover no tokens. Or in the middle of the screen (setting *Where the dice fall*). Quick rolls in a row land next to each other.
 * **Which dice:** d4, d6, d8, d10, d12 and d20 as real shapes, a d100 as a tens die and a ones die, d3 and Fate dice on a d6, coins and other dice as a flat token with the number. Dropped or rerolled dice (advantage, rerolls) fade when they land. A die with a minimum or maximum (`1d20min10`, Reliable Talent) shows the number that counts. Large throws show *Dice per throw* dice and a counter for the rest.
@@ -112,6 +113,7 @@ GM settings, for the whole world:
 | --- | --- |
 | Results in the chat | When the dice have landed (default) or at once |
 | Speed of a throw | Fast (1 second), normal (1.4 seconds) or slow (1.9 seconds), the same for everyone |
+| One throw after the other | A roll that comes while dice still roll waits until they lie still, its card waits too, at most 4 seconds (on) |
 | Dice colors | Player color with own colors allowed (default), or always the player color |
 | Throw initiative rolls | Also throw dice for initiative from the combat tracker (on) |
 | Throw rolls of characters no player owns | Also throw dice for monsters and other characters of the GM (on) |
@@ -197,8 +199,8 @@ The module can take part in a small usage report shared by all of Sephral’s mo
 With the GM’s consent only the active GM’s browser counts, and it sends at most one report a day. The counts are kept in a hidden world setting, so all browsers and computers of the GM count together, and turning the statistics off deletes them. A copy of a world gets its own world ID. The question lists everything the report contains, from the Foundry version to a random world ID. For Swift Dice it holds:
 
 * on how many of the last 30 days the module was used
-* how often the GM's screen threw dice, covered dice and dice added to a card later, how often *My dice* was opened, an own color was chosen, *Surprise me* was used, a class look was chosen, dice were set to follow the class, a look was reset and test dice were thrown
-* the settings *Results in the chat*, *Speed of a throw*, *Dice colors*, *Throw initiative rolls*, *Throw rolls of characters no player owns*, *Hidden rolls*, *Big moments*, *Light and particles*, *Dice per throw*, *Skip dice on slow screens*, and the GM's *Where the dice fall*, *Size of the dice* and *Light and particles on this device* (only the chosen option)
+* how often the GM's screen threw dice, covered dice, dice added to a card later and dice that waited for the throw before them, how often *My dice* was opened, an own color was chosen, *Surprise me* was used, a class look was chosen, dice were set to follow the class, a look was reset and test dice were thrown
+* the settings *Results in the chat*, *Speed of a throw*, *One throw after the other*, *Dice colors*, *Throw initiative rolls*, *Throw rolls of characters no player owns*, *Hidden rolls*, *Big moments*, *Light and particles*, *Dice per throw*, *Skip dice on slow screens*, and the GM's *Where the dice fall*, *Size of the dice* and *Light and particles on this device* (only the chosen option)
 * where errors occur in the module code: file, line and error type, never the error message
 
 No names, notes, pictures or other content of the world are sent.

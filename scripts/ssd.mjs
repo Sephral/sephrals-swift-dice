@@ -1,5 +1,5 @@
 import {MODULE_ID, TESTED_VERSIONS, diceSoNiceActive, setting, t} from "./config.mjs";
-import {chatState, describeMessage, isActive, registerChat, rollsOf, waitForReveal} from "./chat.mjs";
+import {chatState, describeMessage, isActive, registerChat, resetQueue, rollsOf, waitForReveal} from "./chat.mjs";
 import {readyLook} from "./colors.mjs";
 import {registerDebug} from "./debug.mjs";
 import {saveDebugFile} from "./debug-file.mjs";
@@ -9,7 +9,13 @@ import {applyModuleLanguage} from "./language.mjs";
 import {openMyDice, refreshMyDice, testThrow} from "./my-dice-app.mjs";
 import {noticeNewVersions, runSelfTest} from "./selftest.mjs";
 import {changeLanguage, decorateSettings, registerSettings} from "./settings.mjs";
-import {clearTable, tableState} from "./tray.mjs";
+import {clearTable as clearDice, tableState} from "./tray.mjs";
+
+/** Clear the dice on the table and the throws waiting for them. */
+function clearTable() {
+  clearDice();
+  resetQueue();
+}
 import {registerUsage} from "./usage.mjs";
 
 Hooks.once("init", () => {
@@ -22,9 +28,9 @@ Hooks.once("init", () => {
   });
   // Counted only on the active GM's client, like every Sephral module
   registerUsage(MODULE_ID, {
-    features: ["thrown", "covered", "added", "myDice", "ownColor", "testThrow", "surprise", "classLook", "byClass",
+    features: ["thrown", "covered", "added", "queued", "myDice", "ownColor", "testThrow", "surprise", "classLook", "byClass",
       "resetLook"],
-    settings: ["reveal", "speed", "colors", "initiative", "npcRolls", "hiddenRolls", "moments", "effects", "maxDice",
+    settings: ["reveal", "speed", "sequential", "colors", "initiative", "npcRolls", "hiddenRolls", "moments", "effects", "maxDice",
       "minFps", "placement", "size", "deviceEffects", "sceneControl"]
   });
   registerDebug({

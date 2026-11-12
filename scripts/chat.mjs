@@ -2,9 +2,13 @@
  * Roll messages in the chat: which dice to throw, whose look they get, and the short wait of the card.
  *
  * The card never waits for the animation. When it should wait for the dice, its content is hidden for exactly the
- * length of a throw by a timer, plus a style that shows it again on its own after a few seconds. If a throw fails,
- * or this tab is in the background, the result still appears. Every browser starts the throw when the message
- * arrives, so everyone sees the same throw land at nearly the same moment.
+ * length of a throw by a timer, plus a style that shows it again on its own a little later. If a throw fails, or this
+ * tab is in the background, the result still appears. Every browser starts the throw when the message arrives, so
+ * everyone sees the same throw land at nearly the same moment.
+ *
+ * One throw after the other (GM setting): a roll that arrives while dice are still in the air starts when they lie
+ * still, and its card waits with it. Attack and damage then land one after the other. Every browser gets the messages
+ * in the same order, so the queue is the same on every screen. It never holds a throw longer than QUEUE_LIMIT.
  */
 
 import {DURATIONS, LOOK_FLAG, MODULE_ID, diceSoNiceActive, setting} from "./config.mjs";
@@ -22,6 +26,21 @@ const LEAD = 60;
 
 /** Milliseconds the card waits after the dice landed, so the eye is on the dice first. */
 const TAIL = 120;
+
+/** Milliseconds between one throw landing and the next one leaving the hand. */
+const GAP = 150;
+
+/** The longest a throw waits for the ones before it. Later throws start at once, so a busy table never falls behind. */
+const QUEUE_LIMIT = 4000;
+
+/** Milliseconds the card shows its result on its own after its throw should have landed (the style fallback). */
+const FALLBACK = 1500;
+
+/** performance.now() time the last queued throw lands. */
+let queueEnd = 0;
+
+/** Timers of throws waiting in the queue. */
+const queuedTimers = new Set();
 
 /** Messages older than this are not thrown when an update brings rolls (an old card got changed). */
 const OLD_MS = 60_000;
@@ -195,7 +214,7 @@ function onUpdate(message, changed) {
  */
 function onRender(message, html) {
   const entry = waiting.get(message.id);
-  if ( entry && (performance.now() < entry.revealAt) ) html?.classList?.add("ssd-waiting");
+  if ( entry && (performance.now() < entry.revealAt) ) markWaiting(html, entry.revealAt);
 }
 
 /**
@@ -250,9 +269,11 @@ function play(message, rolls, {seed, wait, added = false}) {
     if ( die.covered ) die.glow = null;
   }
   const duration = throwDuration();
-  const startAt = performance.now() + LEAD;
+  const now = performance.now();
+  const startAt = queuedStart(now, duration, setting("sequential"));
+  const queued = Math.round(startAt - now - LEAD);
   if ( wait && !decision.covered ) holdCard(message.id, startAt + duration + TAIL);
-  const done = throwDice(dice, {
+  const options = {
     seed,
     startAt,
     duration,
@@ -264,12 +285,66 @@ function play(message, rolls, {seed, wait, added = false}) {
     effects: effectsHere(),
     style: look.throw,
     sounds: setting("sounds")
-  });
-  const info = {...note, shown: !!done, dice: dice.length, extra, covered: !!decision.covered, waited: wait, added,
-    seed};
-  record(message.id, info);
-  trace.add(done ? "throw" : "late", info);
-  if ( done ) countFeature(MODULE_ID, decision.covered ? "covered" : (added ? "added" : "thrown"));
+  };
+  const info = {...note, dice: dice.length, extra, covered: !!decision.covered, waited: wait, added, seed, queued};
+  const go = () => {
+    // A tab that went to the background meanwhile skips the throw, its card shows on time
+    const done = document.hidden ? null : throwDice(dice, options);
+    record(message.id, {...info, shown: !!done, ...(document.hidden ? {reason: "hiddenTab"} : {})});
+    trace.add(done ? "throw" : "late", info);
+    if ( done ) countFeature(MODULE_ID, decision.covered ? "covered" : (added ? "added" : "thrown"));
+    if ( done && (queued > 0) ) countFeature(MODULE_ID, "queued");
+  };
+  // A queued throw is built when it starts, so its dice do not wait on the table
+  if ( queued > 0 ) {
+    record(message.id, {...info, shown: false, reason: "queued"});
+    const timer = setTimeout(() => {
+      queuedTimers.delete(timer);
+      go();
+    }, queued);
+    queuedTimers.add(timer);
+  }
+  else go();
+}
+
+/**
+ * Forget the queue: the table was cleared, waiting throws are dropped (their cards show on time).
+ */
+export function resetQueue() {
+  for ( const timer of queuedTimers ) clearTimeout(timer);
+  queuedTimers.clear();
+  queueEnd = 0;
+}
+
+/**
+ * When a throw starts: at once, or with one throw after the other when the dice before it lie still. Moves the end of
+ * the queue to the landing of this throw.
+ * @param {number} now          performance.now()
+ * @param {number} duration     Milliseconds of the throw
+ * @param {boolean} sequential  One throw after the other
+ * @returns {number}   performance.now() time the throw starts
+ */
+function queuedStart(now, duration, sequential) {
+  const plan = planStart({now, duration, queueEnd, sequential});
+  queueEnd = plan.queueEnd;
+  return plan.startAt;
+}
+
+/**
+ * The start of a throw and the new end of the queue (pure).
+ * @param {object} state
+ * @param {number} state.now
+ * @param {number} state.duration
+ * @param {number} state.queueEnd     When the last queued throw lands
+ * @param {boolean} state.sequential
+ * @returns {{startAt: number, queueEnd: number}}
+ */
+function planStart({now, duration, queueEnd: end, sequential}) {
+  const soonest = now + LEAD;
+  if ( !sequential ) return {startAt: soonest, queueEnd: Math.max(end, soonest + duration)};
+  const after = end + GAP;
+  const startAt = ((after > soonest) && ((after - soonest) <= QUEUE_LIMIT)) ? after : soonest;
+  return {startAt, queueEnd: Math.max(end, startAt + duration)};
 }
 
 /**
@@ -297,7 +372,19 @@ function holdCard(id, revealAt) {
   if ( previous ) clearTimeout(previous.timer);
   const timer = setTimeout(() => revealCard(id), Math.max(0, revealAt - performance.now()));
   waiting.set(id, {revealAt, timer});
-  for ( const el of document.querySelectorAll(`[data-message-id="${CSS.escape(id)}"]`) ) el.classList.add("ssd-waiting");
+  for ( const el of document.querySelectorAll(`[data-message-id="${CSS.escape(id)}"]`) ) markWaiting(el, revealAt);
+}
+
+/**
+ * Cover the result of a card. The style shows it on its own a little after the throw should have landed, in case the
+ * timer never fires.
+ * @param {HTMLElement} el
+ * @param {number} revealAt   performance.now() time
+ */
+function markWaiting(el, revealAt) {
+  if ( !el?.classList ) return;
+  el.style?.setProperty("--ssd-fallback", `${Math.round(Math.max(0, revealAt - performance.now()) + FALLBACK)}ms`);
+  el.classList.add("ssd-waiting");
 }
 
 /**
@@ -308,7 +395,10 @@ export function revealCard(id) {
   const entry = waiting.get(id);
   if ( entry ) clearTimeout(entry.timer);
   waiting.delete(id);
-  for ( const el of document.querySelectorAll(`[data-message-id="${CSS.escape(id)}"]`) ) el.classList.remove("ssd-waiting");
+  for ( const el of document.querySelectorAll(`[data-message-id="${CSS.escape(id)}"]`) ) {
+    el.classList.remove("ssd-waiting");
+    el.style?.removeProperty("--ssd-fallback");
+  }
   const message = game.messages.get(id);
   if ( message ) Hooks.callAll(`${MODULE_ID}.revealed`, message);
 }
@@ -371,4 +461,4 @@ export function chatState() {
     recent: [...decisions.entries()].slice(-12).map(([id, info]) => ({id, ...info}))};
 }
 
-export const __test__ = {LEAD, TAIL, waiting, thrown};
+export const __test__ = {LEAD, TAIL, GAP, QUEUE_LIMIT, waiting, thrown, planStart};

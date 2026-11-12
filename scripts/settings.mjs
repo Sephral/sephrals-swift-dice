@@ -28,6 +28,7 @@ export const SETTINGS = {
     dice: "SSD.SETTINGS.reveal.dice", instant: "SSD.SETTINGS.reveal.instant"}},
   speed: {type: String, default: "normal", choices: {
     fast: "SSD.SETTINGS.speed.fast", normal: "SSD.SETTINGS.speed.normal", slow: "SSD.SETTINGS.speed.slow"}},
+  sequential: {type: Boolean, default: true},
   colors: {type: String, default: "choice", choices: {
     choice: "SSD.SETTINGS.colors.choice", player: "SSD.SETTINGS.colors.player"}},
   initiative: {type: Boolean, default: true},

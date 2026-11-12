@@ -54,6 +54,10 @@
         "normal": "Normal (1,4 Sekunden)",
         "slow": "Langsam (1,9 Sekunden)"
       },
+      "sequential": {
+        "name": "Ein Wurf nach dem anderen",
+        "hint": "Kommt ein Wurf, während noch Würfel rollen, wartet er, bis sie liegen, und seine Karte wartet mit. So landen Angriff und Schaden nicht gleichzeitig. Ein Wurf wartet nie länger als 4 Sekunden. Aus: Jeder Wurf startet sofort."
+      },
       "colors": {
         "name": "Würfelfarben",
         "hint": "Die Würfel jedes Users haben die Farbe, die in Foundry für ihn gewählt ist. Mit der ersten Wahl dürfen Spieler unter Meine Würfel eigene Farben nehmen. Oberfläche, Muster und Schrift wählen sie immer selbst.",
