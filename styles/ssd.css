@@ -825,6 +825,16 @@
   animation: ssd-shimmer 0.9s linear infinite, ssd-hide 0s linear 4s forwards;
 }
 
+/* A card that waits for its turn stays out of the chat until its dice leave the hand */
+.chat-message.ssd-queued {
+  display: none;
+  animation: ssd-unqueue 0s linear var(--ssd-queue-fallback, 5.5s) forwards;
+}
+
+@keyframes ssd-unqueue {
+  to { display: revert; }
+}
+
 @keyframes ssd-show {
   to { visibility: visible; }
 }

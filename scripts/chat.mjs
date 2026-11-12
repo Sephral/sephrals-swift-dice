@@ -7,7 +7,8 @@
  * everyone sees the same throw land at nearly the same moment.
  *
  * One throw after the other (GM setting): a roll that arrives while dice are still in the air starts when they lie
- * still, and its card waits with it. Attack and damage then land one after the other. Every browser gets the messages
+ * still, and its card waits with it. A card that waits for its turn stays out of the chat until its dice leave the
+ * hand, so an automatic damage card does not tell the hit before the attack dice land. Every browser gets the messages
  * in the same order, so the queue is the same on every screen. It never holds a throw longer than QUEUE_LIMIT.
  */
 
@@ -45,7 +46,7 @@ const queuedTimers = new Set();
 /** Messages older than this are not thrown when an update brings rolls (an old card got changed). */
 const OLD_MS = 60_000;
 
-/** Cards waiting for their dice: message id to {revealAt, timer}. */
+/** Cards waiting for their dice: message id to {revealAt, showAt, timer, showTimer}. */
 const waiting = new Map();
 
 /** Rolls already thrown per message, so an update only throws the new ones. */
@@ -214,7 +215,7 @@ function onUpdate(message, changed) {
  */
 function onRender(message, html) {
   const entry = waiting.get(message.id);
-  if ( entry && (performance.now() < entry.revealAt) ) markWaiting(html, entry.revealAt);
+  if ( entry && (performance.now() < entry.revealAt) ) markWaiting(html, entry.revealAt, entry.showAt);
 }
 
 /**
@@ -272,7 +273,7 @@ function play(message, rolls, {seed, wait, added = false}) {
   const now = performance.now();
   const startAt = queuedStart(now, duration, setting("sequential"));
   const queued = Math.round(startAt - now - LEAD);
-  if ( wait && !decision.covered ) holdCard(message.id, startAt + duration + TAIL);
+  if ( wait && !decision.covered ) holdCard(message.id, startAt + duration + TAIL, queued > 0 ? startAt : 0);
   const options = {
     seed,
     startAt,
@@ -308,12 +309,13 @@ function play(message, rolls, {seed, wait, added = false}) {
 }
 
 /**
- * Forget the queue: the table was cleared, waiting throws are dropped (their cards show on time).
+ * Forget the queue: the table was cleared, waiting throws are dropped and their cards come in at once.
  */
 export function resetQueue() {
   for ( const timer of queuedTimers ) clearTimeout(timer);
   queuedTimers.clear();
   queueEnd = 0;
+  for ( const [id, entry] of [...waiting] ) if ( entry.showAt ) revealCard(id);
 }
 
 /**
@@ -363,28 +365,70 @@ function record(id, info) {
 /* -------------------------------------------- */
 
 /**
- * Hide the result of a card until a moment.
+ * Hide the result of a card until a moment, and a card that waits for its turn completely until its dice leave the hand.
  * @param {string} id
  * @param {number} revealAt   performance.now() time
+ * @param {number} [showAt]   performance.now() time the card appears (0: at once)
  */
-function holdCard(id, revealAt) {
+function holdCard(id, revealAt, showAt = 0) {
   const previous = waiting.get(id);
-  if ( previous ) clearTimeout(previous.timer);
-  const timer = setTimeout(() => revealCard(id), Math.max(0, revealAt - performance.now()));
-  waiting.set(id, {revealAt, timer});
-  for ( const el of document.querySelectorAll(`[data-message-id="${CSS.escape(id)}"]`) ) markWaiting(el, revealAt);
+  if ( previous ) {
+    clearTimeout(previous.timer);
+    clearTimeout(previous.showTimer);
+  }
+  const now = performance.now();
+  const timer = setTimeout(() => revealCard(id), Math.max(0, revealAt - now));
+  const showTimer = (showAt > now) ? setTimeout(() => showCard(id), showAt - now) : null;
+  waiting.set(id, {revealAt, showAt, timer, showTimer});
+  for ( const el of document.querySelectorAll(`[data-message-id="${CSS.escape(id)}"]`) ) markWaiting(el, revealAt, showAt);
 }
 
 /**
- * Cover the result of a card. The style shows it on its own a little after the throw should have landed, in case the
- * timer never fires.
+ * Cover the result of a card, and the whole card while it waits for its turn. The style shows both on their own a
+ * little after they should have appeared, in case a timer never fires.
  * @param {HTMLElement} el
  * @param {number} revealAt   performance.now() time
+ * @param {number} [showAt]   performance.now() time
  */
-function markWaiting(el, revealAt) {
+function markWaiting(el, revealAt, showAt = 0) {
   if ( !el?.classList ) return;
-  el.style?.setProperty("--ssd-fallback", `${Math.round(Math.max(0, revealAt - performance.now()) + FALLBACK)}ms`);
+  const now = performance.now();
+  el.style?.setProperty("--ssd-fallback", `${Math.round(Math.max(0, revealAt - now) + FALLBACK)}ms`);
   el.classList.add("ssd-waiting");
+  if ( showAt > now ) {
+    el.style?.setProperty("--ssd-queue-fallback", `${Math.round(showAt - now + FALLBACK)}ms`);
+    el.classList.add("ssd-queued");
+  }
+}
+
+/**
+ * Bring a card that waited for its turn into the chat, its result still covered until its dice land.
+ * @param {string} id
+ */
+function showCard(id) {
+  const entry = waiting.get(id);
+  if ( entry ) {
+    clearTimeout(entry.showTimer);
+    entry.showTimer = null;
+    entry.showAt = 0;
+  }
+  unqueue(id);
+}
+
+/**
+ * Take the queued mark off the elements of a card. The log follows the new card down when it was at the bottom, and a
+ * chat notification starts its time on screen now.
+ * @param {string} id
+ */
+function unqueue(id) {
+  let shown = false;
+  for ( const el of document.querySelectorAll(`[data-message-id="${CSS.escape(id)}"].ssd-queued`) ) {
+    el.classList.remove("ssd-queued");
+    el.style?.removeProperty("--ssd-queue-fallback");
+    if ( "_lifeSpan" in el ) el._lifeSpan = 0;
+    shown = true;
+  }
+  if ( shown && ui.chat?.isAtBottom ) ui.chat.scrollBottom?.({popout: true});
 }
 
 /**
@@ -393,8 +437,12 @@ function markWaiting(el, revealAt) {
  */
 export function revealCard(id) {
   const entry = waiting.get(id);
-  if ( entry ) clearTimeout(entry.timer);
+  if ( entry ) {
+    clearTimeout(entry.timer);
+    clearTimeout(entry.showTimer);
+  }
   waiting.delete(id);
+  unqueue(id);
   for ( const el of document.querySelectorAll(`[data-message-id="${CSS.escape(id)}"]`) ) {
     el.classList.remove("ssd-waiting");
     el.style?.removeProperty("--ssd-fallback");
@@ -408,7 +456,10 @@ export function revealCard(id) {
  */
 function revealDue() {
   const now = performance.now();
-  for ( const [id, entry] of waiting ) if ( entry.revealAt <= now ) revealCard(id);
+  for ( const [id, entry] of waiting ) {
+    if ( entry.revealAt <= now ) revealCard(id);
+    else if ( entry.showAt && (entry.showAt <= now) ) showCard(id);
+  }
 }
 
 /**

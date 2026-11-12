@@ -6,7 +6,7 @@ Swift Dice throws 3D dice for every roll in the chat. The dice are drawn by the 
 
 * **When:** a chat message with rolls arrives. Every screen starts the throw the moment the message arrives, so all players see the dice land together. The way the dice tumble is the same on every screen.
 * **The card:** with *Results in the chat* on *When the dice have landed* (the default), the card appears at once and its result stays covered while the dice roll. The wait is never longer than the throw itself (plus the throws before it, see below), and shortly after that the result shows in any case. With *At once* the card shows its result right away and the dice roll along.
-* **One throw after the other:** a roll that comes while dice are still rolling waits until they lie still, and its card waits with it. Attack and damage, or an attack and the automatic damage of a system or module, land one after the other, so nobody reads the hit from the number of damage dice. A throw waits at most 4 seconds, after that the next ones start at once. Every screen gets the rolls in the same order, so all see the same sequence. The GM turns it off with *One throw after the other*.
+* **One throw after the other:** a roll that comes while dice are still rolling waits until they lie still, and its card only comes into the chat when its dice leave the hand. Attack and damage, or an attack and the automatic damage of a system or module, land one after the other, so nobody reads the hit from the number of damage dice or from a damage card that is already there. A throw waits at most 4 seconds, after that the next ones start at once. Every screen gets the rolls in the same order, so all see the same sequence. The GM turns it off with *One throw after the other*.
 * **Rolls added later:** cards that get their rolls after they appear (Midi QOL attacks and damage, for example) throw the new dice when they arrive. Their card does not wait.
 * **Where:** beside the chat, left of the sidebar or of the column with new chat messages, and above the macro bar, so the dice cover no tokens. Or in the middle of the screen (setting *Where the dice fall*). Quick rolls in a row land next to each other.
 * **Which dice:** d4, d6, d8, d10, d12 and d20 as real shapes, a d100 as a tens die and a ones die, d3 and Fate dice on a d6, coins and other dice as a flat token with the number. Dropped or rerolled dice (advantage, rerolls) fade when they land. A die with a minimum or maximum (`1d20min10`, Reliable Talent) shows the number that counts. Large throws show *Dice per throw* dice and a counter for the rest.
@@ -113,7 +113,7 @@ GM settings, for the whole world:
 | --- | --- |
 | Results in the chat | When the dice have landed (default) or at once |
 | Speed of a throw | Fast (1 second), normal (1.4 seconds) or slow (1.9 seconds), the same for everyone |
-| One throw after the other | A roll that comes while dice still roll waits until they lie still, its card waits too, at most 4 seconds (on) |
+| One throw after the other | A roll that comes while dice still roll waits until they lie still, its card comes into the chat with its dice, at most 4 seconds (on) |
 | Dice colors | Player color with own colors allowed (default), or always the player color |
 | Throw initiative rolls | Also throw dice for initiative from the combat tracker (on) |
 | Throw rolls of characters no player owns | Also throw dice for monsters and other characters of the GM (on) |

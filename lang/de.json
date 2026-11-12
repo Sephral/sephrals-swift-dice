@@ -56,7 +56,7 @@
       },
       "sequential": {
         "name": "Ein Wurf nach dem anderen",
-        "hint": "Kommt ein Wurf, während noch Würfel rollen, wartet er, bis sie liegen, und seine Karte wartet mit. So landen Angriff und Schaden nicht gleichzeitig. Ein Wurf wartet nie länger als 4 Sekunden. Aus: Jeder Wurf startet sofort."
+        "hint": "Kommt ein Wurf, während noch Würfel rollen, wartet er, bis sie liegen, und seine Karte kommt erst mit seinen Würfeln in den Chat. So landen Angriff und Schaden nicht gleichzeitig, und eine automatische Schadenskarte verrät den Treffer nicht vorher. Ein Wurf wartet nie länger als 4 Sekunden. Aus: Jeder Wurf startet sofort."
       },
       "colors": {
         "name": "Würfelfarben",

@@ -2,7 +2,7 @@
   "id": "sephrals-swift-dice",
   "title": "Sephral’s Swift Dice",
   "description": "Light 3D dice for every roll that never hold up the game: everyone sees the same throw at the same moment, the chat card always appears, the dice take the color each player picked in Foundry, and they run on weak laptops, tablets and Firefox without WebGL.",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "compatibility": {
     "minimum": 13,
     "verified": "14.370",
