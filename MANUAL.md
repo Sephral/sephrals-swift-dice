@@ -201,6 +201,6 @@ With the GM’s consent only the active GM’s browser counts, and it sends at m
 * on how many of the last 30 days the module was used
 * how often the GM's screen threw dice, covered dice, dice added to a card later and dice that waited for the throw before them, how often *My dice* was opened, an own color was chosen, *Surprise me* was used, a class look was chosen, dice were set to follow the class, a look was reset and test dice were thrown
 * the settings *Results in the chat*, *Speed of a throw*, *One throw after the other*, *Dice colors*, *Throw initiative rolls*, *Throw rolls of characters no player owns*, *Hidden rolls*, *Big moments*, *Light and particles*, *Dice per throw*, *Skip dice on slow screens*, and the GM's *Where the dice fall*, *Size of the dice* and *Light and particles on this device* (only the chosen option)
-* where errors occur in the module code: file, line and error type, never the error message
+* where errors occur in the module code: file, line, error type and whether the error arose in the module itself, in Foundry, in the game system or in another module, never the error message or the name of another module
 
 No names, notes, pictures or other content of the world are sent.
