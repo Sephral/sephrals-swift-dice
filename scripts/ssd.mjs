@@ -23,7 +23,7 @@ Hooks.once("init", () => {
   registerSettings({
     language: value => changeLanguage(value, refreshMyDice),
     clear: () => clearTable(),
-    controls: () => ui.controls?.render?.({reset: true}),
+    controls: () => ui.controls?.render?.({reset: true})?.catch?.(() => {}),
     openMyDice
   });
   // Counted only on the active GM's client, like every Sephral module
