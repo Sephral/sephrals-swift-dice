@@ -1,4 +1,5 @@
 import {MODULE_ID, TESTED_VERSIONS, diceSoNiceActive, setting, t} from "./config.mjs";
+import {registerActorLook} from "./actor-look.mjs";
 import {chatState, describeMessage, isActive, registerChat, resetQueue, rollsOf, waitForReveal} from "./chat.mjs";
 import {readyLook} from "./colors.mjs";
 import {registerDebug} from "./debug.mjs";
@@ -29,7 +30,7 @@ Hooks.once("init", () => {
   // Counted only on the active GM's client, like every Sephral module
   registerUsage(MODULE_ID, {
     features: ["thrown", "covered", "added", "queued", "myDice", "ownColor", "testThrow", "surprise", "classLook", "byClass",
-      "resetLook"],
+      "resetLook", "actorLook"],
     settings: ["reveal", "speed", "sequential", "colors", "initiative", "npcRolls", "hiddenRolls", "moments", "effects", "maxDice",
       "minFps", "placement", "size", "deviceEffects", "sceneControl"]
   });
@@ -39,8 +40,9 @@ Hooks.once("init", () => {
   });
   registerChat();
   registerKeys();
+  registerActorLook();
   game.modules.get(MODULE_ID).api = {
-    /** Open the window "My dice". */
+    /** Open the window "My dice", for a character with open({actor}) (one the user owns). */
     open: openMyDice,
     /** Throw dice in this browser only, without a chat message (formula like "2d6 + 1d20"). */
     testThrow,

@@ -9,7 +9,7 @@
  */
 
 import {ICON, LOOK_FLAG, MODULE_ID, TEMPLATES, addSettingsGear, isShown, setting, t} from "./config.mjs";
-import {effectsHere, lookOf, tableJudge, throwDuration} from "./chat.mjs";
+import {actorChoice, effectsHere, lookOf, tableJudge, throwDuration} from "./chat.mjs";
 import {themeOf} from "./classes.mjs";
 import {AURAS, CLASS_LOOKS, CORES, EFFECT_COLORS, FINISHES, FONTS, FUMBLES, GLOWS, LANDINGS, PATTERNS, PRESETS,
   SEE_THROUGH, THROWS, TRAIL_KINDS, TRIUMPHS, lookForDie, normalizeHex, numberColor, randomLook, readyLook,
@@ -54,6 +54,26 @@ function ownActor() {
   return canvas?.tokens?.controlled?.[0]?.actor ?? game.user.character ?? null;
 }
 
+/**
+ * The characters whose look the user may edit and the window offers: the selected one, the user's own, those with a
+ * look of their own and those players own.
+ * @param {Actor|null} current   The one the window shows now
+ * @returns {Actor[]}
+ */
+function characterChoices(current = null) {
+  const found = new Map();
+  const add = actor => {
+    if ( actor?.isOwner ) found.set(actor.id, actor);
+  };
+  add(current);
+  add(canvas?.tokens?.controlled?.[0]?.actor);
+  add(game.user.character);
+  for ( const actor of game.actors ?? [] ) {
+    if ( actor.isOwner && (actorChoice(actor) || (actor.hasPlayerOwner && (actor.type !== "npc"))) ) add(actor);
+  }
+  return [...found.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
 export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @override */
   static DEFAULT_OPTIONS = {
@@ -75,6 +95,27 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   /** @override */
   static PARTS = {main: {template: `${TEMPLATES}/my-dice.hbs`}};
 
+  /** The id of the character whose own look the window edits, null for the user's own look. */
+  #target = null;
+
+  /**
+   * The character the window edits, if the user owns it.
+   * @returns {Actor|null}
+   */
+  get targetActor() {
+    const actor = this.#target ? game.actors?.get(this.#target) : null;
+    return actor?.isOwner ? actor : null;
+  }
+
+  /**
+   * Edit the look of a character instead of the user's own.
+   * @param {Actor|string|null} actor
+   */
+  setTarget(actor) {
+    const found = (typeof actor === "string") ? game.actors?.get(actor) : actor;
+    this.#target = found?.isOwner ? found.id : null;
+  }
+
   /** @override */
   get title() {
     return t("SSD.MyDice.title");
@@ -82,11 +123,15 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
 
   /** @override */
   async _prepareContext() {
-    const choice = game.user.getFlag(MODULE_ID, LOOK_FLAG) ?? {};
+    const forActor = this.targetActor;
+    const userChoice = game.user.getFlag(MODULE_ID, LOOK_FLAG) ?? {};
+    // A character without a look of its own starts from the user's look, nothing is stored until something changes
+    const ownChoice = forActor ? actorChoice(forActor) : null;
+    const choice = forActor ? (ownChoice ?? {...userChoice, byClass: false}) : userChoice;
     const allowOwn = setting("colors") === "choice";
     const playerColor = normalizeHex(game.user.color) ?? "#7a5c3e";
     // The user's own look, not the class look: the fields show what the user picked
-    const look = lookOf(game.user);
+    const look = forActor ? lookOf({color: game.user.color, getFlag: () => choice}) : lookOf(game.user);
     const option = (list, current, prefix) => list.map(key => ({key, label: t(`SSD.MyDice.${prefix}.${key}`),
       selected: key === current}));
     // A color field with its automatic value: what the effect shows while the user picked none
@@ -107,7 +152,15 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // The ready look or class look the user took, while nothing of it changed since
     const presetNow = readyLookOf(choice, Object.keys(PRESETS));
     const classNow = readyLookOf(choice);
+    const targets = characterChoices(forActor).map(a => ({id: a.id, name: a.name, selected: a.id === forActor?.id,
+      own: !!actorChoice(a)}));
     return {
+      forActor: !!forActor,
+      targets,
+      targetName: forActor?.name ?? "",
+      targetHint: forActor ? t(ownChoice ? "SSD.MyDice.forCharacterOwn" : "SSD.MyDice.forCharacterNone",
+        {name: forActor.name}) : "",
+      resetLabel: t(forActor ? "SSD.MyDice.resetActor" : "SSD.MyDice.reset"),
       own: allowOwn && (choice.mode === "own"),
       allowOwn,
       playerColor,
@@ -146,7 +199,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       text: Object.fromEntries(["presetsLabel", "color", "player", "own", "locked", "d20", "style", "pattern", "second",
         "finish", "numbers", "textAuto", "textOwn", "font", "effects", "glow", "glowColor", "trail", "effectsOff", "core",
         "aura", "landing", "throw", "triumph", "fumble", "throwing", "coreHint", "random", "test", "everyone",
-        "classesLabel", "byClass", "reset", "resetHint", "colorBack"].map(key => [key, t(`SSD.MyDice.${key}`)]))
+        "classesLabel", "byClass", "reset", "resetHint", "colorBack", "forWho", "forMe"].map(key => [key, t(`SSD.MyDice.${key}`)]))
     };
   }
 
@@ -167,6 +220,11 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if ( widest ) form.style.setProperty("--ssd-keys", `${Math.ceil(widest)}px`);
     form.addEventListener("change", event => {
       const target = event.target;
+      if ( target.name === "target" ) {
+        this.setTarget(target.value || null);
+        this.render();
+        return;
+      }
       if ( (target.name === "core") && (target.value !== "none") && !SEE_THROUGH.includes(form.elements.finish.value) ) {
         form.elements.finish.value = "glass";
       }
@@ -236,6 +294,13 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * @param {object} [choice]
    */
   async #save(choice = this.#read()) {
+    const forActor = this.targetActor;
+    if ( forActor ) {
+      if ( !actorChoice(forActor) ) countFeature(MODULE_ID, "actorLook");
+      this.#drawPreview({...choice, byClass: false});
+      await forActor.update({[`flags.${MODULE_ID}.${LOOK_FLAG}`]: {...choice, byClass: false}});
+      return;
+    }
     const before = game.user.getFlag(MODULE_ID, LOOK_FLAG) ?? {};
     if ( (choice.mode === "own") && (before.mode !== "own") ) countFeature(MODULE_ID, "ownColor");
     if ( choice.byClass && !before.byClass ) countFeature(MODULE_ID, "byClass");
@@ -250,8 +315,13 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   #drawPreview(choice) {
     const stage = this.element?.querySelector(".ssd-preview");
     if ( !stage ) return;
+    const forActor = this.targetActor;
+    // A character shows its own look, or the user's until it has one
+    if ( !choice && forActor ) {
+      choice = actorChoice(forActor) ?? {...(game.user.getFlag(MODULE_ID, LOOK_FLAG) ?? {}), byClass: false};
+    }
     const user = choice ? {color: game.user.color, getFlag: () => choice} : game.user;
-    const look = lookOf(user, {actor: ownActor()});
+    const look = lookOf(user, {actor: forActor ? null : ownActor()});
     stage.replaceChildren();
     const rand = seededRandom(`preview:${game.user.id}`);
     PREVIEW.forEach((die, i) => {
@@ -300,7 +370,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * Throw dice in this browser only, no chat message.
    */
   static async #onTestThrow() {
-    await testThrow();
+    await testThrow(undefined, {actor: this.targetActor});
   }
 
   /**
@@ -350,6 +420,12 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * Everything back to the start: dice in the player color without effects.
    */
   static async #onReset() {
+    const forActor = this.targetActor;
+    if ( forActor ) {
+      await forActor.update({[`flags.${MODULE_ID}.-=${LOOK_FLAG}`]: null});
+      countFeature(MODULE_ID, "resetLook");
+      return this.render();
+    }
     this.#drawPreview({});
     await game.user.update({[`flags.${MODULE_ID}.-=${LOOK_FLAG}`]: null});
     countFeature(MODULE_ID, "resetLook");
@@ -369,12 +445,14 @@ function toCss(r) {
  * Throw dice in this browser only, in the user's look (the look of their character's class when the dice follow
  * it).
  * @param {string} [formula]
+ * @param {object} [options]
+ * @param {Actor|null} [options.actor]   The character who throws, its own look counts
  * @returns {Promise<Roll>}
  */
-export async function testThrow(formula = TEST_FORMULA) {
+export async function testThrow(formula = TEST_FORMULA, {actor = null} = {}) {
   const roll = await new foundry.dice.Roll(formula).evaluate();
   const {dice, extra} = diceToThrow([roll], {maxDice: setting("maxDice"), judge: tableJudge()});
-  const look = lookOf(game.user, {actor: ownActor()});
+  const look = lookOf(game.user, {actor: actor ?? ownActor()});
   for ( const die of dice ) die.look = lookForDie(look, die.type);
   throwDice(dice, {
     seed: `test:${foundry.utils.randomID()}`,
@@ -395,16 +473,23 @@ export async function testThrow(formula = TEST_FORMULA) {
 
 /**
  * Open the window, or bring it to the front.
+ * @param {object} [options]
+ * @param {Actor|string|null} [options.actor]   Edit the look of this character (one the user owns)
  * @returns {Promise<MyDiceApp>}
  */
-export async function openMyDice() {
+export async function openMyDice({actor} = {}) {
   const existing = foundry.applications.instances.get("ssd-my-dice");
   countFeature(MODULE_ID, "myDice");
   if ( isShown(existing) ) {
+    if ( actor !== undefined ) {
+      existing.setTarget(actor);
+      existing.render();
+    }
     existing.bringToFront();
     return existing;
   }
   const app = existing ?? new MyDiceApp();
+  app.setTarget(actor ?? null);
   await app.render({force: true});
   return app;
 }

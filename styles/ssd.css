@@ -1264,6 +1264,23 @@
   text-shadow: 0 0 2px var(--ssd-glowc), 0 0 6px var(--ssd-glowc);
 }
 
+/* Velvet: a soft nap with a light rim and fine fibers */
+.ssd-velvet .ssd-face {
+  background:
+    radial-gradient(closest-side, transparent 62%, rgb(255 255 255 / 0.2) 96%),
+    radial-gradient(circle, rgb(255 255 255 / 0.16) 0 0.6px, transparent 1.2px) 0 0 / 4px 4px,
+    linear-gradient(165deg, var(--ssd-light) 0%, var(--ssd-body) 42%, var(--ssd-dark) 100%);
+}
+
+/* Porcelain: a bright glaze with fine hairline cracks */
+.ssd-porcelain .ssd-face {
+  background:
+    linear-gradient(112deg, transparent 38%, rgb(0 0 0 / 0.14) 39%, transparent 40.2%),
+    linear-gradient(58deg, transparent 62%, rgb(0 0 0 / 0.12) 63%, transparent 64%),
+    linear-gradient(152deg, transparent 20%, rgb(0 0 0 / 0.1) 21%, transparent 22%),
+    radial-gradient(circle at 28% 22%, #ffffff 0%, var(--ssd-light) 26%, var(--ssd-body) 66%, var(--ssd-dark) 100%);
+}
+
 .ssd-inner-frosted {
   background: radial-gradient(circle at 50% 58%, rgb(255 255 255 / 0.3) 0, var(--ssd-glass-body) 50%, transparent 74%);
 }
@@ -1314,6 +1331,28 @@
     radial-gradient(1.2px 1.2px at 25% 85%, var(--ssd-second), transparent),
     radial-gradient(1px 1px at 55% 40%, #ffffff, transparent);
   opacity: 0.95;
+}
+
+/* Waves: arcs like ripples of water */
+.ssd-pattern-waves .ssd-face::before {
+  background: repeating-radial-gradient(ellipse 70% 60% at 50% 130%, transparent 0 5px, var(--ssd-second) 5px 7px);
+  opacity: 0.5;
+}
+
+/* Web: threads from the middle and rings around it */
+.ssd-pattern-web .ssd-face::before {
+  background:
+    repeating-conic-gradient(from 8deg at 50% 50%, var(--ssd-second) 0 1.5deg, transparent 1.5deg 36deg),
+    repeating-radial-gradient(circle at 50% 50%, transparent 0 8px, var(--ssd-second) 8px 9px);
+  opacity: 0.5;
+}
+
+/* Diamonds: crossing lines */
+.ssd-pattern-diamonds .ssd-face::before {
+  background:
+    repeating-linear-gradient(45deg, var(--ssd-second) 0 1.5px, transparent 1.5px 10px),
+    repeating-linear-gradient(-45deg, var(--ssd-second) 0 1.5px, transparent 1.5px 10px);
+  opacity: 0.6;
 }
 
 /* -------------------------------------------- */
@@ -2706,4 +2745,14 @@
   .ssd-p-gears b {
     animation-duration: 0s;
   }
+}
+
+/* The character whose own look the window edits */
+.ssd-app .ssd-target select {
+  flex: 1;
+  min-width: 0;
+}
+
+.ssd-app .ssd-target-hint {
+  margin-top: 0;
 }

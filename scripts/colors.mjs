@@ -9,8 +9,8 @@ export const FALLBACK_COLOR = "#7a5c3e";
 
 /** The materials, patterns and fonts a user can pick. */
 export const FINISHES = ["glossy", "matte", "metal", "chrome", "glass", "crystal", "frosted", "ice", "jade", "pearl",
-  "holo", "wood", "stone", "carbon", "parchment", "lava", "galaxy", "neon"];
-export const PATTERNS = ["none", "blend", "speckled", "marble", "stripes", "dots", "checker", "scales", "swirl", "starry"];
+  "holo", "wood", "stone", "carbon", "parchment", "lava", "galaxy", "neon", "velvet", "porcelain"];
+export const PATTERNS = ["none", "blend", "speckled", "marble", "stripes", "dots", "checker", "scales", "swirl", "starry", "waves", "web", "diamonds"];
 
 /** Materials one can look into; only they show what is inside. */
 export const SEE_THROUGH = ["glass", "crystal", "frosted", "ice", "jade"];
@@ -115,7 +115,34 @@ export const PRESETS = {
   ink: {color: "#f1e6cf", second: "#2a2018", pattern: "none", finish: "parchment", font: "typewriter", trail: "notes",
     landing: "ink", throw: "hand"},
   carbon: {color: "#2b2d31", second: "#e04a3a", pattern: "none", finish: "carbon", glow: "soft", glowColor: "#ff5a3c",
-    trail: "sparks", aura: "rings", landing: "crater", throw: "slam"}
+    trail: "sparks", aura: "rings", landing: "crater", throw: "slam"},
+  // Seasons
+  blossom: {color: "#f3b6cb", second: "#ffffff", pattern: "dots", finish: "porcelain", glow: "soft", glowColor: "#ffc4da",
+    trail: "petals", aura: "butterflies", landing: "flowers", throw: "gust", triumph: "bloom"},
+  midsummer: {color: "#f0cf4a", second: "#fff6b8", pattern: "none", finish: "glass", glow: "soft", glowColor: "#ffe66b",
+    trail: "sparks", core: "fireflies", aura: "sparkflies", landing: "sparkle", throw: "hand"},
+  harvest: {color: "#d9a441", second: "#7a4a1a", pattern: "waves", finish: "matte", trail: "leaves", aura: "motes",
+    landing: "dust", throw: "gust"},
+  hallow: {color: "#e8741a", second: "#2a1236", pattern: "none", finish: "glass", glow: "flicker", glowColor: "#ff9a2a",
+    trail: "bats", core: "ghost", aura: "shadow", landing: "smoke", throw: "portal", fumble: "skull"},
+  festive: {color: "#a81c2a", second: "#e8c96a", pattern: "diamonds", finish: "velvet", glow: "soft", glowColor: "#ffd66b",
+    trail: "glitter", aura: "twinkle", landing: "sparkle", throw: "drop", triumph: "confetti"},
+  // Elements
+  tide: {color: "#1d7fa8", second: "#b6f0ff", pattern: "waves", finish: "glass", glow: "soft", glowColor: "#7fe3ff",
+    trail: "bubbles", aura: "bubbles", landing: "splash", throw: "vortex"},
+  gale: {color: "#cfe8e4", second: "#ffffff", pattern: "swirl", finish: "frosted", glow: "soft", glowColor: "#e6fffb",
+    trail: "wind", core: "feather", aura: "motes", landing: "shockwave", throw: "gust"},
+  terra: {color: "#7a5a3a", second: "#4f7a2c", pattern: "speckled", finish: "stone", trail: "leaves", aura: "vines",
+    landing: "crater", throw: "slam"},
+  // Creatures
+  wolf: {color: "#7e8aa0", second: "#e6ebf2", pattern: "none", finish: "frosted", glow: "soft", glowColor: "#cfe2ff",
+    trail: "wind", core: "paw", aura: "shadow", landing: "dust", throw: "gust"},
+  weaver: {color: "#1b1620", second: "#c8c8e0", pattern: "web", finish: "glass", glow: "soft", glowColor: "#c0ff6a",
+    trail: "smoke", core: "spider", aura: "shadow", landing: "smoke", throw: "drop"},
+  raven: {color: "#14141c", second: "#6a5cb0", pattern: "diamonds", finish: "crystal", glow: "soft", glowColor: "#a898ff",
+    trail: "feathers", core: "crow", aura: "wings", landing: "smoke", throw: "gust", fumble: "raincloud"},
+  kraken: {color: "#1a4a4f", second: "#6fe0c0", pattern: "scales", finish: "jade", glow: "soft", glowColor: "#6fe0c0",
+    trail: "bubbles", aura: "tentacles", landing: "splash", throw: "vortex", fumble: "skull"}
 };
 
 /**

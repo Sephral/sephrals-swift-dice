@@ -229,3 +229,14 @@ test("a surprise sometimes colors effects and never keeps following the class", 
   }
   assert.ok((colored > 10) && (colored < 60), String(colored));
 });
+
+test("the new materials and patterns are offered and the seasonal, element and creature looks use them", () => {
+  assert.ok(["velvet", "porcelain"].every(f => FINISHES.includes(f)));
+  assert.ok(["waves", "web", "diamonds"].every(p => PATTERNS.includes(p)));
+  const keys = ["blossom", "midsummer", "harvest", "hallow", "festive", "tide", "gale", "terra", "wolf", "weaver", "raven", "kraken"];
+  assert.ok(keys.every(k => PRESETS[k]));
+  assert.ok(Object.values(PRESETS).some(p => p.finish === "velvet") && Object.values(PRESETS).some(p => p.finish === "porcelain"));
+  // A core shows only in see-through materials
+  for ( const k of keys ) if ( PRESETS[k].core ) assert.ok(SEE_THROUGH.includes(PRESETS[k].finish), k);
+  assert.equal(diceLook({userColor: "#336699", choice: readyLook("festive")}).finish, "velvet");
+});

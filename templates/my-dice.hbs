@@ -1,6 +1,16 @@
 <form class="ssd-shell" autocomplete="off">
   <div class="ssd-columns">
     <div class="ssd-column">
+      {{#if targets.length}}
+      <label class="ssd-row ssd-target">
+        <span class="ssd-key">{{text.forWho}}</span>
+        <select name="target" aria-label="{{text.forWho}}">
+          <option value="">{{text.forMe}}</option>
+          {{#each targets}}<option value="{{id}}" {{#if selected}}selected{{/if}}>{{name}}</option>{{/each}}
+        </select>
+      </label>
+      {{#if forActor}}<p class="ssd-hint ssd-center ssd-target-hint">{{targetHint}}</p>{{/if}}
+      {{/if}}
       <div class="ssd-preview" aria-hidden="true"></div>
       <p class="ssd-hint ssd-center">{{text.everyone}}</p>
 
@@ -17,7 +27,7 @@
         {{/if}}
         <div class="ssd-buttons">
           <button type="button" class="ssd-random" data-action="randomize"><i class="fa-solid fa-wand-magic-sparkles" inert></i> {{text.random}}</button>
-          <button type="button" class="ssd-reset" data-action="resetLook" data-tooltip="{{text.resetHint}}"><i class="fa-solid fa-rotate-left" inert></i> {{text.reset}}</button>
+          <button type="button" class="ssd-reset" data-action="resetLook" data-tooltip="{{text.resetHint}}"><i class="fa-solid fa-rotate-left" inert></i> {{resetLabel}}</button>
         </div>
       </fieldset>
 
@@ -30,11 +40,13 @@
             style="--ssd-a: {{color}}; --ssd-b: {{second}}; --ssd-c: {{glowColor}}"><i class="fa-solid {{icon}}" inert></i></button>
           {{/each}}
         </div>
+        {{#unless forActor}}
         <label class="ssd-row">
           <input type="checkbox" name="byClass" {{#if byClass}}checked{{/if}}>
           <span>{{text.byClass}}</span>
         </label>
         <p class="ssd-hint ssd-indent ssd-class-status">{{classStatus}}</p>
+        {{/unless}}
       </fieldset>
 
       <fieldset class="ssd-card">

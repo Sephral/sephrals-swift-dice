@@ -153,7 +153,10 @@
         "checker": "Schachbrett",
         "scales": "Schuppen",
         "swirl": "Wirbel",
-        "starry": "Sternenhimmel"
+        "starry": "Sternenhimmel",
+        "waves": "Wellen",
+        "web": "Netz",
+        "diamonds": "Rauten"
       },
       "finishes": {
         "glossy": "Glänzend",
@@ -173,7 +176,9 @@
         "holo": "Holografisch",
         "carbon": "Carbon",
         "parchment": "Pergament",
-        "neon": "Neon"
+        "neon": "Neon",
+        "velvet": "Samt",
+        "porcelain": "Porzellan"
       },
       "fonts": {
         "classic": "Klassisch",
@@ -213,7 +218,19 @@
         "sun": "Sonne",
         "night": "Nacht",
         "ink": "Tinte und Papier",
-        "carbon": "Carbon"
+        "carbon": "Carbon",
+        "blossom": "Blüte",
+        "midsummer": "Mittsommer",
+        "harvest": "Ernte",
+        "hallow": "Gruselnacht",
+        "festive": "Festlich",
+        "tide": "Gezeiten",
+        "gale": "Windstoß",
+        "terra": "Erde",
+        "wolf": "Wolf",
+        "weaver": "Weberin",
+        "raven": "Rabe",
+        "kraken": "Krake"
       },
       "effects": "Effekte",
       "glow": "Leuchten",
@@ -400,7 +417,12 @@
       "resetHint": "Zurück zu Würfeln in deiner Spielerfarbe ohne Effekte.",
       "colorAuto": "automatisch, folgt dem Würfel oder seinem Licht. Wähle eine Farbe, um sie zu ändern.",
       "colorOwn": "deine eigene Farbe",
-      "colorBack": "Zurück zur automatischen Farbe"
+      "colorBack": "Zurück zur automatischen Farbe",
+      "forWho": "Würfel für",
+      "forMe": "Mich",
+      "forCharacterOwn": "{name} würfelt für alle mit diesen Würfeln. Mit dem Zurücksetzen verliert der Charakter sein Aussehen wieder.",
+      "forCharacterNone": "{name} hat noch kein eigenes Aussehen und würfelt mit deinen Würfeln. Ändere hier etwas, dann bekommt er eins.",
+      "resetActor": "Wieder meine Würfel nehmen"
     },
     "Classes": {
       "barbarian": "Barbar",
@@ -487,6 +509,9 @@
       "Hint": "Speichert eine Datei für Fehlerberichte über alle Module von Sephral in dieser Welt: Versionen, Einstellungen und was die Module aufgezeichnet haben, etwa die letzten Chatnachrichten, die sie gelesen haben. Sie enthält Chattext und Flüsternachrichten, prüfe sie vor dem Teilen.",
       "Entry": "Debug-Datei speichern (Sephral’s Module)",
       "Saved": "Debug-Datei {file} gespeichert. Sie enthält Chattext und Flüsternachrichten, prüfe sie vor dem Teilen."
+    },
+    "Actor": {
+      "entry": "Würfel dieses Charakters"
     }
   }
 }

@@ -11,7 +11,7 @@
 ## Highlights
 
 * **The result never gets lost:** the chat card appears at once and shows its result when the dice lie still. Every screen sees the same throw, so nobody gives the result away early.
-* **Your color, your dice:** dice take each player's Foundry color. *My dice* offers materials from glass to lava, patterns, a color for every effect and thirty ready looks.
+* **Your color, your dice:** dice take each player's Foundry color. *My dice* offers materials from glass to lava, patterns, a color for every effect, forty-two ready looks and a look of its own for each character.
 * **Dice for every class:** the druid's dice ride a gust of wind, the paladin's wear wings, the barbarian's make the table quake. Seventeen class looks, or dice that follow the class of whoever rolls.
 * **Thirteen ways to throw:** from a hand, a cup, a cannon or a bow, through a portal, as meteors and more, clicking in the sound of their material if you like.
 * **Light and magic:** trails of sparks, runes or bats, auras from a halo to tentacles, landings in holy light or a shower of arrows, glass dice with a beating heart inside.
@@ -19,7 +19,7 @@
 * **Light enough for every table:** no WebGL, no physics engine. The dice run on old laptops, tablets and in Firefox, beside the chat.
 * **Secret rolls stay secret:** blind rolls show covered dice to the one who rolled, private rolls nothing to the others. Every die from d4 to d100, any system, Midi QOL and Ready Set Roll.
 
-![Some of the thirty ready looks](media/looks.png)
+![Some of the ready looks](media/looks.png)
 
 ## How it works
 

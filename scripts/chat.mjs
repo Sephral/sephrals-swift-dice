@@ -129,14 +129,27 @@ export function decide(message) {
 }
 
 /**
- * The look of a user's dice. A user who lets the dice follow the class gets the look of the character who rolls
- * (its class, or what kind of creature it is), and their own look for anyone else.
+ * The look a character carries of its own (stored on the actor), or null.
+ * @param {Actor|null} actor
+ * @returns {object|null}
+ */
+export function actorChoice(actor) {
+  const choice = actor?.getFlag?.(MODULE_ID, LOOK_FLAG);
+  return (choice && (typeof choice === "object") && Object.keys(choice).length) ? choice : null;
+}
+
+/**
+ * The look of a user's dice. A character with a look of its own throws it. Otherwise a user who lets the dice
+ * follow the class gets the look of the character who rolls (its class, or what kind of creature it is), and
+ * anyone else their own look. The color of the user stays the default color of every look.
  * @param {User|null} user
  * @param {object} [options]
  * @param {Actor|null} [options.actor]   The character who rolls
  * @returns {object}
  */
 export function lookOf(user, {actor = null} = {}) {
+  const own = actorChoice(actor);
+  if ( own ) return diceLook({userColor: user?.color, choice: own, allowOwn: setting("colors") === "choice"});
   let choice = user?.getFlag?.(MODULE_ID, LOOK_FLAG) ?? {};
   if ( choice.byClass && actor ) {
     const theme = themeOf(actor);

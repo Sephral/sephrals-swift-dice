@@ -153,7 +153,10 @@
         "checker": "Checker",
         "scales": "Scales",
         "swirl": "Swirl",
-        "starry": "Starry"
+        "starry": "Starry",
+        "waves": "Waves",
+        "web": "Web",
+        "diamonds": "Diamonds"
       },
       "finishes": {
         "glossy": "Glossy",
@@ -173,7 +176,9 @@
         "holo": "Holographic",
         "carbon": "Carbon",
         "parchment": "Parchment",
-        "neon": "Neon"
+        "neon": "Neon",
+        "velvet": "Velvet",
+        "porcelain": "Porcelain"
       },
       "fonts": {
         "classic": "Classic",
@@ -213,7 +218,19 @@
         "sun": "Sun",
         "night": "Night",
         "ink": "Ink and paper",
-        "carbon": "Carbon"
+        "carbon": "Carbon",
+        "blossom": "Blossom",
+        "midsummer": "Midsummer",
+        "harvest": "Harvest",
+        "hallow": "Hallow’s Eve",
+        "festive": "Festive",
+        "tide": "Tide",
+        "gale": "Gale",
+        "terra": "Terra",
+        "wolf": "Wolf",
+        "weaver": "Weaver",
+        "raven": "Raven",
+        "kraken": "Kraken"
       },
       "effects": "Effects",
       "glow": "Glow",
@@ -400,7 +417,12 @@
       "resetHint": "Back to dice in your player color without effects.",
       "colorAuto": "automatic, follows the die or its light. Pick a color to change it.",
       "colorOwn": "your own color",
-      "colorBack": "Back to the automatic color"
+      "colorBack": "Back to the automatic color",
+      "forWho": "Dice for",
+      "forMe": "Me",
+      "forCharacterOwn": "{name} throws these dice for everyone. Reset takes the look away again.",
+      "forCharacterNone": "{name} has no look of its own yet and throws your dice. Change something here to give it one.",
+      "resetActor": "Use my look again"
     },
     "Classes": {
       "barbarian": "Barbarian",
@@ -487,6 +509,9 @@
       "Hint": "Saves one file for bug reports about all of Sephral’s modules in this world: versions, settings and what the modules recorded, such as the latest chat messages they read. It contains chat text and whispers, check it before you share it.",
       "Entry": "Save Debug File (Sephral’s Modules)",
       "Saved": "Debug file {file} saved. It contains chat text and whispers, check it before you share it."
+    },
+    "Actor": {
+      "entry": "Dice of this character"
     }
   }
 }
