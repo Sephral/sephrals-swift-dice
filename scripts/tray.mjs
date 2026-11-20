@@ -125,6 +125,17 @@ function visibleRect(el) {
 }
 
 /**
+ * The share of the area kept free at its edges: a die rests with its middle at least a die and a third from the
+ * edge, never less than the usual 14 %. Only big dice in a small area change anything.
+ * @param {number} size   Die size in pixels
+ * @param {{width: number, height: number}} rect
+ * @returns {number}
+ */
+export function edgeMargin(size, rect) {
+  return Math.min(0.3, Math.max(0.14, (size * 0.67) / Math.min(rect.width, rect.height)));
+}
+
+/**
  * Throw dice onto the table.
  * @param {object[]} dice   From diceToThrow, each with its look
  * @param {object} options
@@ -161,7 +172,8 @@ export function throwDice(dice, {seed, startAt, duration, size, placement, linge
   const rand = seededRandom(seed);
   // Throw styles are part of the effects: a screen without them throws the classic way, to the same places
   const throwStyle = (effects.glow && !reducedMotion) ? style : "classic";
-  const plans = planThrow(dice.length, {rand, aspect: rect.width / rect.height, from: rect.from, style: throwStyle});
+  const plans = planThrow(dice.length, {rand, aspect: rect.width / rect.height, from: rect.from, style: throwStyle,
+    margin: edgeMargin(size, rect)});
   const unit = size / 2;
   const delay = startAt - now;
   const entry = {seed, area, rect, animations: [], timers: [], dice: []};

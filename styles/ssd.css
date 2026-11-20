@@ -897,8 +897,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  height: 116px;
+  gap: 12px;
+  height: 120px;
   border-radius: 8px;
   background: radial-gradient(ellipse at 50% 60%, rgb(127 127 127 / 0.18), transparent 70%);
   perspective: 700px;
@@ -906,8 +906,9 @@
 
 .ssd-app .ssd-preview-die {
   position: relative;
-  width: 72px;
-  height: 72px;
+  flex: 0 0 auto;
+  width: var(--ssd-pv, 72px);
+  height: var(--ssd-pv, 72px);
   transform-style: preserve-3d;
 }
 
@@ -1004,8 +1005,16 @@
   gap: 6px;
 }
 
-.ssd-app .ssd-pair select {
+.ssd-app .ssd-pair select,
+.ssd-app .ssd-pair input[type="range"] {
   flex: 1;
+  min-width: 0;
+}
+
+.ssd-app .ssd-size-out {
+  flex: 0 0 52px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .ssd-app .ssd-pair input[type="color"],

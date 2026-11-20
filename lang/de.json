@@ -366,6 +366,8 @@
         "notes": "Akkord"
       },
       "throwing": "Wurf",
+      "size": "Größe",
+      "sizeHint": "Größe eines Würfels auf diesem Gerät, für alle Würfel und alle Figuren.",
       "throw": "Art des Wurfs",
       "triumph": "Bei einem Triumph",
       "fumble": "Bei einem Patzer",

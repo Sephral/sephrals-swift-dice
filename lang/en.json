@@ -366,6 +366,8 @@
         "notes": "Chord"
       },
       "throwing": "Throw",
+      "size": "Size",
+      "sizeHint": "Size of one die on this device, for all dice and all characters.",
       "throw": "Way of throwing",
       "triumph": "On a triumph",
       "fumble": "On a fumble",

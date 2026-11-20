@@ -110,6 +110,12 @@
 
       <fieldset class="ssd-card ssd-grid">
         <legend>{{text.throwing}}</legend>
+        <span class="ssd-key">{{text.size}}</span>
+        <div class="ssd-pair">
+          <input type="range" name="size" min="{{sizeRange.min}}" max="{{sizeRange.max}}" step="{{sizeRange.step}}" value="{{size}}"
+            aria-label="{{text.sizeHint}}" data-tooltip="{{text.sizeHint}}">
+          <output class="ssd-size-out" name="sizeOut">{{size}} px</output>
+        </div>
         <span class="ssd-key">{{text.throw}}</span>
         <div class="ssd-pair">
           <select name="throw">

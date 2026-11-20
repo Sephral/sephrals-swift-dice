@@ -19,7 +19,7 @@ export const SETTINGS = {
   enabled: {type: Boolean, default: true, scope: "client", onChange: "clear"},
   placement: {type: String, default: "tray", scope: "client", choices: {
     tray: "SSD.SETTINGS.placement.tray", center: "SSD.SETTINGS.placement.center"}},
-  size: {type: Number, default: 56, scope: "client", range: {min: 32, max: 96, step: 4}},
+  size: {type: Number, default: 56, scope: "client", onChange: "size", range: {min: 32, max: 128, step: 4}},
   linger: {type: Number, default: 2.5, scope: "client", range: {min: 1, max: 8, step: 0.5}},
   deviceEffects: {type: Boolean, default: true, scope: "client"},
   sounds: {type: Boolean, default: false, scope: "client"},
@@ -51,7 +51,7 @@ export const SETTINGS = {
 
 /**
  * Register all settings of the module and its menus.
- * @param {{language: Function, clear: Function, controls: Function, openMyDice: Function}} handlers
+ * @param {{language: Function, clear: Function, controls: Function, size: Function, openMyDice: Function}} handlers
  */
 export function registerSettings(handlers) {
   openMyDiceMenu = handlers.openMyDice;

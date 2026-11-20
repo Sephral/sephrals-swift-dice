@@ -184,3 +184,12 @@ test("fireworks and confetti are planned from the seed", () => {
   assert.equal(rain.length, 20);
   assert.ok(rain.every(p => (p.x >= 0) && (p.x <= 1) && (p.life > 1000)));
 });
+
+test("big dice keep a wider margin from the edge of the table", () => {
+  const rand = seededRandom("margin");
+  const plain = restingPlaces(10, rand, 1.6);
+  const wide = restingPlaces(10, seededRandom("margin"), 1.6, 0.3);
+  assert.ok(Math.min(...plain.map(p => p.x)) >= 0.14 - 1e-9);
+  assert.ok(Math.min(...wide.map(p => p.x), ...wide.map(p => p.y)) >= 0.3 - 1e-9);
+  assert.ok(Math.max(...wide.map(p => p.x), ...wide.map(p => p.y)) <= 0.7 + 1e-9);
+});

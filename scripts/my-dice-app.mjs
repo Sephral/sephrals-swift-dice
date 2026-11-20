@@ -25,6 +25,9 @@ const {ApplicationV2, HandlebarsApplicationMixin} = foundry.applications.api;
 /** The dice of a test throw. */
 const TEST_FORMULA = "1d20 + 1d12 + 1d10 + 1d8 + 1d6 + 1d4";
 
+/** The die size on this device: the range of the setting, shared with the slider in the window. */
+const SIZE_RANGE = {min: 32, max: 128, step: 4};
+
 /** The dice of the preview. */
 const PREVIEW = [{type: "d20", value: 20, faces: 20, unit: 30}, {type: "d6", value: 6, faces: 6, unit: 21},
   {type: "d4", value: 4, faces: 4, unit: 20}];
@@ -190,6 +193,8 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       cores: option(CORES, choice.core ?? "none", "cores"),
       coreHidden: !SEE_THROUGH.includes(look.finish) && (choice.core ?? "none") !== "none",
       effectsOff: !effectsHere().glow,
+      size: setting("size"),
+      sizeRange: SIZE_RANGE,
       byClass: !!choice.byClass,
       classStatus,
       presets: Object.entries(PRESETS).map(([key, p]) => ({key, ...p, label: t(`SSD.MyDice.presets.${key}`),
@@ -199,7 +204,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       text: Object.fromEntries(["presetsLabel", "color", "player", "own", "locked", "d20", "style", "pattern", "second",
         "finish", "numbers", "textAuto", "textOwn", "font", "effects", "glow", "glowColor", "trail", "effectsOff", "core",
         "aura", "landing", "throw", "triumph", "fumble", "throwing", "coreHint", "random", "test", "everyone",
-        "classesLabel", "byClass", "reset", "resetHint", "colorBack", "forWho", "forMe"].map(key => [key, t(`SSD.MyDice.${key}`)]))
+        "classesLabel", "byClass", "reset", "resetHint", "colorBack", "forWho", "forMe", "size", "sizeHint"].map(key => [key, t(`SSD.MyDice.${key}`)]))
     };
   }
 
@@ -220,6 +225,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     if ( widest ) form.style.setProperty("--ssd-keys", `${Math.ceil(widest)}px`);
     form.addEventListener("change", event => {
       const target = event.target;
+      if ( target.name === "size" ) return;   // stored by the input handler, a device setting and no part of the look
       if ( target.name === "target" ) {
         this.setTarget(target.value || null);
         this.render();
@@ -240,6 +246,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // Color fields change live while their picker is open, the preview follows before anything is stored
     form.addEventListener("input", event => {
       const target = event.target;
+      if ( target.name === "size" ) return this.#sizeInput(target);
       if ( target.type !== "color" ) return;
       const name = target.name;
       if ( AUTO_COLORS.includes(name) ) delete target.dataset.auto;
@@ -249,6 +256,43 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       if ( (name === "glowColor") && (form.elements.glow.value === "none") ) form.elements.glow.value = "soft";
       this.#drawPreview(this.#read());
     });
+  }
+
+  /**
+   * The size slider moved: the preview follows at once, the setting is stored when the slider rests.
+   * @param {HTMLInputElement} slider
+   */
+  #sizeInput(slider) {
+    const value = Number(slider.value);
+    this.#showSize(value);
+    this.#drawPreview(this.targetActor ? undefined : this.#read());
+    clearTimeout(this.#sizeTimer);
+    this.#sizeTimer = setTimeout(() => {
+      if ( setting("size") !== value ) game.settings.set(MODULE_ID, "size", value);
+    }, 250);
+  }
+
+  #sizeTimer = 0;
+
+  /**
+   * Show a size in the number beside the slider.
+   * @param {number} value
+   */
+  #showSize(value) {
+    const out = this.element?.querySelector(".ssd-size-out");
+    if ( out ) out.value = `${value} px`;
+  }
+
+  /**
+   * The setting changed somewhere else (the settings dialog, the other device tab): move the slider along.
+   * @param {number} value
+   */
+  syncSize(value) {
+    const slider = this.element?.querySelector("input[name=size]");
+    if ( !slider || (Number(slider.value) === value) ) return;
+    slider.value = value;
+    this.#showSize(value);
+    this.#drawPreview(this.targetActor ? undefined : this.#read());
   }
 
   /**
@@ -324,9 +368,14 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const look = lookOf(user, {actor: forActor ? null : ownActor()});
     stage.replaceChildren();
     const rand = seededRandom(`preview:${game.user.id}`);
-    PREVIEW.forEach((die, i) => {
+    // The preview dice grow and shrink with the size on this device, within what the preview has room for
+    const slider = this.element.querySelector("input[name=size]");
+    const scale = Math.min(1.35, Math.max(0.6, (Number(slider?.value) || setting("size")) / 56));
+    PREVIEW.forEach((base, i) => {
+      const die = {...base, unit: Math.round(base.unit * scale)};
       const holder = document.createElement("div");
       holder.className = `ssd-preview-die ssd-preview-${i}`;
+      holder.style.setProperty("--ssd-pv", `${Math.round(72 * scale)}px`);
       const spin = document.createElement("div");
       spin.className = "ssd-preview-spin";
       const dieLook = lookForDie(look, die.type);
@@ -492,6 +541,20 @@ export async function openMyDice({actor} = {}) {
   app.setTarget(actor ?? null);
   await app.render({force: true});
   return app;
+}
+
+/**
+ * The size on this device changed, here or in the settings dialog: the slider follows. Counted once per session.
+ * @param {number} value
+ */
+let sizeCounted = false;
+export function onSizeChanged(value) {
+  const app = foundry.applications.instances.get("ssd-my-dice");
+  if ( isShown(app) ) app.syncSize(Number(value));
+  if ( !sizeCounted ) {
+    sizeCounted = true;
+    countFeature(MODULE_ID, "sizeChanged");
+  }
 }
 
 /**

@@ -70,9 +70,10 @@ const between = (rand, [low, spread]) => low + (rand() * spread);
  * @param {number} count
  * @param {() => number} rand
  * @param {number} [aspect=1.6]   Width of the area divided by its height
+ * @param {number} [margin=0.14]  Share of the area kept free at each edge, so big dice stay inside
  * @returns {{x: number, y: number}[]}
  */
-export function restingPlaces(count, rand, aspect = 1.6) {
+export function restingPlaces(count, rand, aspect = 1.6, margin = 0.14) {
   if ( count <= 0 ) return [];
   let cols = Math.max(1, Math.round(Math.sqrt(count * aspect)));
   let rows = Math.ceil(count / cols);
@@ -88,7 +89,6 @@ export function restingPlaces(count, rand, aspect = 1.6) {
     const j = Math.floor(rand() * (i + 1));
     [cells[i], cells[j]] = [cells[j], cells[i]];
   }
-  const margin = 0.14;
   const w = (1 - (2 * margin)) / cols;
   const h = (1 - (2 * margin)) / rows;
   return cells.slice(0, count).map(([c, r]) => ({
@@ -187,9 +187,9 @@ function launchPoint(launch, from, rand) {
  * @param {string} [options.style="classic"]   A key of STYLES
  * @returns {object[]}
  */
-export function planThrow(count, {rand, aspect = 1.6, from = "right", style = "classic"}) {
+export function planThrow(count, {rand, aspect = 1.6, from = "right", style = "classic", margin = 0.14}) {
   const def = STYLES[style] ?? STYLES.classic;
-  const places = restingPlaces(count, rand, aspect);
+  const places = restingPlaces(count, rand, aspect, margin);
   const base = launchPoint(def.launch, from, rand);
   return places.map((end, i) => {
     let start;

@@ -7,7 +7,7 @@ import {saveDebugFile} from "./debug-file.mjs";
 import {frameRate, watchFrameRate} from "./fps.mjs";
 import {registerHubModule} from "./hub.mjs";
 import {applyModuleLanguage} from "./language.mjs";
-import {openMyDice, refreshMyDice, testThrow} from "./my-dice-app.mjs";
+import {onSizeChanged, openMyDice, refreshMyDice, testThrow} from "./my-dice-app.mjs";
 import {noticeNewVersions, runSelfTest} from "./selftest.mjs";
 import {changeLanguage, decorateSettings, registerSettings} from "./settings.mjs";
 import {clearTable as clearDice, tableState} from "./tray.mjs";
@@ -25,12 +25,13 @@ Hooks.once("init", () => {
     language: value => changeLanguage(value, refreshMyDice),
     clear: () => clearTable(),
     controls: () => ui.controls?.render?.({reset: true})?.catch?.(() => {}),
+    size: onSizeChanged,
     openMyDice
   });
   // Counted only on the active GM's client, like every Sephral module
   registerUsage(MODULE_ID, {
     features: ["thrown", "covered", "added", "queued", "myDice", "ownColor", "testThrow", "surprise", "classLook", "byClass",
-      "resetLook", "actorLook"],
+      "resetLook", "actorLook", "sizeChanged"],
     settings: ["reveal", "speed", "sequential", "colors", "initiative", "npcRolls", "hiddenRolls", "moments", "effects", "maxDice",
       "minFps", "placement", "size", "deviceEffects", "sceneControl"]
   });
