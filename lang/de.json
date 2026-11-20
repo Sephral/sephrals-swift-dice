@@ -421,7 +421,7 @@
       "forWho": "Würfel für",
       "forMe": "Mich",
       "forCharacterOwn": "{name} würfelt für alle mit diesen Würfeln. Mit dem Zurücksetzen verliert der Charakter sein Aussehen wieder.",
-      "forCharacterNone": "{name} hat noch kein eigenes Aussehen und würfelt mit deinen Würfeln. Ändere hier etwas, dann bekommt er eins.",
+      "forCharacterNone": "{name} hat noch kein eigenes Aussehen und würfelt mit deinen Würfeln. Sobald du hier etwas änderst, bekommt der Charakter eigene Würfel.",
       "resetActor": "Wieder meine Würfel nehmen"
     },
     "Classes": {
