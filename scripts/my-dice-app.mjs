@@ -124,17 +124,42 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     return t("SSD.MyDice.title");
   }
 
+  /*
+   * What the window reads about the user and the characters. A sample window (sample-windows.mjs) overrides these, so
+   * it shows made-up data and stores nothing.
+   */
+
+  /** The user's own choice of dice. */
+  userChoice() {
+    return game.user.getFlag(MODULE_ID, LOOK_FLAG) ?? {};
+  }
+
+  /** The character whose class the dice follow. */
+  lookActor() {
+    return ownActor();
+  }
+
+  /** The characters the window offers. */
+  characterList(current) {
+    return characterChoices(current);
+  }
+
+  /** The options of a test throw. */
+  throwOptions() {
+    return {actor: this.targetActor};
+  }
+
   /** @override */
   async _prepareContext() {
     const forActor = this.targetActor;
-    const userChoice = game.user.getFlag(MODULE_ID, LOOK_FLAG) ?? {};
+    const userChoice = this.userChoice();
     // A character without a look of its own starts from the user's look, nothing is stored until something changes
     const ownChoice = forActor ? actorChoice(forActor) : null;
     const choice = forActor ? (ownChoice ?? {...userChoice, byClass: false}) : userChoice;
     const allowOwn = setting("colors") === "choice";
     const playerColor = normalizeHex(game.user.color) ?? "#7a5c3e";
     // The user's own look, not the class look: the fields show what the user picked
-    const look = forActor ? lookOf({color: game.user.color, getFlag: () => choice}) : lookOf(game.user);
+    const look = lookOf({color: game.user.color, getFlag: () => choice});
     const option = (list, current, prefix) => list.map(key => ({key, label: t(`SSD.MyDice.${prefix}.${key}`),
       selected: key === current}));
     // A color field with its automatic value: what the effect shows while the user picked none
@@ -143,7 +168,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
       return {name: key, value: own ?? shown, auto: !own,
         tooltip: own ? t("SSD.MyDice.colorOwn") : t("SSD.MyDice.colorAuto")};
     };
-    const actor = ownActor();
+    const actor = this.lookActor();
     const theme = themeOf(actor);
     let classStatus;
     if ( !actor ) classStatus = t("SSD.MyDice.byClassNone");
@@ -155,7 +180,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     // The ready look or class look the user took, while nothing of it changed since
     const presetNow = readyLookOf(choice, Object.keys(PRESETS));
     const classNow = readyLookOf(choice);
-    const targets = characterChoices(forActor).map(a => ({id: a.id, name: a.name, selected: a.id === forActor?.id,
+    const targets = this.characterList(forActor).map(a => ({id: a.id, name: a.name, selected: a.id === forActor?.id,
       own: !!actorChoice(a)}));
     return {
       forActor: !!forActor,
@@ -268,7 +293,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     this.#drawPreview(this.targetActor ? undefined : this.#read());
     clearTimeout(this.#sizeTimer);
     this.#sizeTimer = setTimeout(() => {
-      if ( setting("size") !== value ) game.settings.set(MODULE_ID, "size", value);
+      if ( !this.isSample && (setting("size") !== value) ) game.settings.set(MODULE_ID, "size", value);
     }, 250);
   }
 
@@ -339,6 +364,11 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   async #save(choice = this.#read()) {
     const forActor = this.targetActor;
+    // A sample window keeps the choice in memory only
+    if ( this.isSample ) {
+      this.sampleSave?.(forActor, choice);
+      return this.render();
+    }
     if ( forActor ) {
       if ( !actorChoice(forActor) ) countFeature(MODULE_ID, "actorLook");
       this.#drawPreview({...choice, byClass: false});
@@ -362,10 +392,10 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const forActor = this.targetActor;
     // A character shows its own look, or the user's until it has one
     if ( !choice && forActor ) {
-      choice = actorChoice(forActor) ?? {...(game.user.getFlag(MODULE_ID, LOOK_FLAG) ?? {}), byClass: false};
+      choice = actorChoice(forActor) ?? {...this.userChoice(), byClass: false};
     }
-    const user = choice ? {color: game.user.color, getFlag: () => choice} : game.user;
-    const look = lookOf(user, {actor: forActor ? null : ownActor()});
+    const user = {color: game.user.color, getFlag: () => choice ?? this.userChoice()};
+    const look = lookOf(user, {actor: forActor ? null : this.lookActor()});
     stage.replaceChildren();
     const rand = seededRandom(`preview:${game.user.id}`);
     // The preview dice grow and shrink with the size on this device, within what the preview has room for
@@ -419,7 +449,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    * Throw dice in this browser only, no chat message.
    */
   static async #onTestThrow() {
-    await testThrow(undefined, {actor: this.targetActor});
+    await testThrow(undefined, this.throwOptions());
   }
 
   /**
@@ -428,7 +458,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
   static async #onRandomize() {
     const allowOwn = setting("colors") === "choice";
     await this.#save(randomLook(Math.random, {allowOwn, current: this.#read()}));
-    countFeature(MODULE_ID, "surprise");
+    if ( !this.isSample ) countFeature(MODULE_ID, "surprise");
   }
 
   /**
@@ -450,7 +480,7 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
     const choice = readyLook(target.dataset.key, this.#read());
     if ( !choice ) return;
     await this.#save({...choice, byClass: false});
-    countFeature(MODULE_ID, "classLook");
+    if ( !this.isSample ) countFeature(MODULE_ID, "classLook");
   }
 
   /**
@@ -470,6 +500,10 @@ export class MyDiceApp extends HandlebarsApplicationMixin(ApplicationV2) {
    */
   static async #onReset() {
     const forActor = this.targetActor;
+    if ( this.isSample ) {
+      this.sampleSave?.(forActor, null);
+      return this.render();
+    }
     if ( forActor ) {
       await forActor.update({[`flags.${MODULE_ID}.-=${LOOK_FLAG}`]: null});
       countFeature(MODULE_ID, "resetLook");
@@ -496,12 +530,13 @@ function toCss(r) {
  * @param {string} [formula]
  * @param {object} [options]
  * @param {Actor|null} [options.actor]   The character who throws, its own look counts
+ * @param {object|null} [options.look]   A look to throw instead (a sample window), counts nothing when `sample` is set
  * @returns {Promise<Roll>}
  */
-export async function testThrow(formula = TEST_FORMULA, {actor = null} = {}) {
+export async function testThrow(formula = TEST_FORMULA, {actor = null, look: given = null, sample = false} = {}) {
   const roll = await new foundry.dice.Roll(formula).evaluate();
   const {dice, extra} = diceToThrow([roll], {maxDice: setting("maxDice"), judge: tableJudge()});
-  const look = lookOf(game.user, {actor: actor ?? ownActor()});
+  const look = given ?? lookOf(game.user, {actor: actor ?? ownActor()});
   for ( const die of dice ) die.look = lookForDie(look, die.type);
   throwDice(dice, {
     seed: `test:${foundry.utils.randomID()}`,
@@ -516,7 +551,7 @@ export async function testThrow(formula = TEST_FORMULA, {actor = null} = {}) {
     style: look.throw,
     sounds: setting("sounds")
   });
-  countFeature(MODULE_ID, "testThrow");
+  if ( !sample ) countFeature(MODULE_ID, "testThrow");
   return roll;
 }
 

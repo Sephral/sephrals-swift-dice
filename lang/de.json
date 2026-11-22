@@ -514,6 +514,27 @@
     },
     "Actor": {
       "entry": "Würfel dieses Charakters"
+    },
+    "Sample": {
+      "momentsIntro": "Würfle und sieh, wie ein Triumph oder ein Patzer landet. Der Wurf bleibt auf diesem Bildschirm, es wird nichts gepostet.",
+      "throwTriumph": "Triumph würfeln",
+      "throwFumble": "Patzer würfeln",
+      "throwBoth": "Beides würfeln",
+      "tryRule": "6 Würfel mit dieser Regel würfeln",
+      "otherSystems": "Jedes andere System",
+      "creaturesIntro": "Die Würfel richten sich nach der Art der Kreatur, wenn sie keine Klasse hat:",
+      "menuActor": "Eintrag im Menü eines Figurenbogens und im Kontextmenü der Akteure:",
+      "menuKeys": "Tasten (standardmäßig keine, im Tastenmenü von Foundry wählbar):",
+      "myDiceClass": "Meine Würfel: Würfel folgen der Klasse",
+      "myDiceUnknown": "Meine Würfel: Figur ohne Klasse",
+      "characterOwn": "Meine Würfel: Figur mit eigenen Würfeln",
+      "characterNone": "Meine Würfel: Figur ohne eigene Würfel",
+      "creatures": "Würfel nach Art der Kreatur",
+      "moments": "Triumph und Patzer auf dem Tisch",
+      "rule": "Große Momente: Einstellungen für die SL",
+      "menus": "Menüeintrag und Tasten",
+      "groupMoments": "Große Momente",
+      "groupMore": "Menüs und Tasten"
     }
   }
 }

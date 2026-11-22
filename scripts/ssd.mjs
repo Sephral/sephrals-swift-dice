@@ -6,6 +6,7 @@ import {registerDebug} from "./debug.mjs";
 import {saveDebugFile} from "./debug-file.mjs";
 import {frameRate, watchFrameRate} from "./fps.mjs";
 import {registerHubModule} from "./hub.mjs";
+import {sampleWindows} from "./sample-windows.mjs";
 import {applyModuleLanguage} from "./language.mjs";
 import {onSizeChanged, openMyDice, refreshMyDice, testThrow} from "./my-dice-app.mjs";
 import {noticeNewVersions, runSelfTest} from "./selftest.mjs";
@@ -65,6 +66,8 @@ Hooks.once("init", () => {
      * user's look: game.user.setFlag("sephrals-swift-dice", "look", api.readyLook("druid")).
      */
     readyLook: key => readyLook(key, {}),
+    /** Windows and states filled with made-up data, nothing saved (translators, testing). */
+    samples: () => sampleWindows(),
     /** Check the module (GM). */
     runSelfTest,
     /** Save the debug file of Sephral's modules (GM). */

@@ -189,6 +189,7 @@ The look of each user's dice is saved with that user in the world. Nothing else 
 | `rollsOf(message)` | The rolls Swift Dice reads from a chat message, Ready Set Roll cards included |
 | `open({actor})` | Opens *My dice*, for a character the user owns when `actor` (a document or its id) is given |
 | `readyLook(key)` | The look of a ready look, a class or a creature (`"nebula"`, `"druid"`, `"undead"`), to store with `game.user.setFlag("sephrals-swift-dice", "look", ...)` |
+| `samples()` | The list of sample windows (*My dice* for made-up characters, triumph and fumble on the table, the GM's rule for big moments), each with an `open()` that shows made-up data and stores nothing. Translators and testers use it |
 | `runSelfTest()` | Runs the self test (GM) |
 | `saveDebugFile()` | Saves the debug file (GM) |
 

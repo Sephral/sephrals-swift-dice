@@ -514,6 +514,27 @@
     },
     "Actor": {
       "entry": "Dice of this character"
+    },
+    "Sample": {
+      "momentsIntro": "Throw dice and watch a triumph or a fumble land. The throw stays on this screen, nothing is posted.",
+      "throwTriumph": "Throw a triumph",
+      "throwFumble": "Throw a fumble",
+      "throwBoth": "Throw both",
+      "tryRule": "Throw 6 dice with this rule",
+      "otherSystems": "Every other system",
+      "creaturesIntro": "The dice follow the kind of creature when it has no class:",
+      "menuActor": "Entry in the menu of a character sheet and in the context menu of the actors:",
+      "menuKeys": "Keys (none set by default, pick them in Foundry's key settings):",
+      "myDiceClass": "My dice: dice follow the class",
+      "myDiceUnknown": "My dice: character without a class",
+      "characterOwn": "My dice: character with its own dice",
+      "characterNone": "My dice: character without own dice",
+      "creatures": "Dice by kind of creature",
+      "moments": "Triumph and fumble on the table",
+      "rule": "Big moments: GM settings",
+      "menus": "Menu entry and keys",
+      "groupMoments": "Big moments",
+      "groupMore": "Menus and keys"
     }
   }
 }
